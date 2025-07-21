@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ResidentCard } from './ResidentCard';
 import { AddMemberModal } from './AddMemberModal';
@@ -9,17 +8,32 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Filter, Plus, Users, Home, Clock, CheckCircle } from 'lucide-react';
 
-const mockResidents = [
+interface Resident {
+  id: string;
+  name: string;
+  flat: string;
+  ownershipType: 'Owner' | 'Tenant';
+  ownerSince: string;
+  familySize: number;
+  phone: string;
+  email: string;
+  paymentStatus: 'Paid' | 'Overdue' | 'Partial';
+  lastPayment?: string;
+  dueAmount?: number;
+  role?: string;
+}
+
+const mockResidents: Resident[] = [
   {
     id: '1',
     name: 'Rajesh Kumar',
     flat: 'B-204',
-    ownershipType: 'Owner' as const,
+    ownershipType: 'Owner',
     ownerSince: '2018',
     familySize: 4,
     phone: '+91 9876543210',
     email: 'rajesh.kumar@email.com',
-    paymentStatus: 'Paid' as const,
+    paymentStatus: 'Paid',
     lastPayment: 'Jan 1, 2025 (₹3,500)',
     role: 'Secretary'
   },
@@ -27,60 +41,60 @@ const mockResidents = [
     id: '2',
     name: 'Priya Sharma',
     flat: 'A-101',
-    ownershipType: 'Owner' as const,
+    ownershipType: 'Owner',
     ownerSince: '2020',
     familySize: 3,
     phone: '+91 9876543211',
     email: 'priya.sharma@email.com',
-    paymentStatus: 'Overdue' as const,
+    paymentStatus: 'Overdue',
     dueAmount: 7000,
   },
   {
     id: '3',
     name: 'Amit Patel',
     flat: 'C-305',
-    ownershipType: 'Tenant' as const,
+    ownershipType: 'Tenant',
     ownerSince: '2022',
     familySize: 2,
     phone: '+91 9876543212',
     email: 'amit.patel@email.com',
-    paymentStatus: 'Paid' as const,
+    paymentStatus: 'Paid',
     lastPayment: 'Dec 28, 2024 (₹3,500)',
   },
   {
     id: '4',
     name: 'Sunita Reddy',
     flat: 'A-203',
-    ownershipType: 'Owner' as const,
+    ownershipType: 'Owner',
     ownerSince: '2019',
     familySize: 5,
     phone: '+91 9876543213',
     email: 'sunita.reddy@email.com',
-    paymentStatus: 'Partial' as const,
+    paymentStatus: 'Partial',
     dueAmount: 1750,
   },
   {
     id: '5',
     name: 'Vikram Singh',
     flat: 'B-101',
-    ownershipType: 'Tenant' as const,
+    ownershipType: 'Tenant',
     ownerSince: '2023',
     familySize: 2,
     phone: '+91 9876543214',
     email: 'vikram.singh@email.com',
-    paymentStatus: 'Paid' as const,
+    paymentStatus: 'Paid',
     lastPayment: 'Jan 2, 2025 (₹3,500)',
   },
   {
     id: '6',
     name: 'Meera Gupta',
     flat: 'C-102',
-    ownershipType: 'Owner' as const,
+    ownershipType: 'Owner',
     ownerSince: '2017',
     familySize: 3,
     phone: '+91 9876543215',
     email: 'meera.gupta@email.com',
-    paymentStatus: 'Overdue' as const,
+    paymentStatus: 'Overdue',
     dueAmount: 3500,
   },
 ];
@@ -91,8 +105,8 @@ export const ResidentDirectory: React.FC = () => {
   const [filterType, setFilterType] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [selectedResident, setSelectedResident] = useState<typeof mockResidents[0] | null>(null);
-  const [residents, setResidents] = useState(mockResidents);
+  const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
+  const [residents, setResidents] = useState<Resident[]>(mockResidents);
 
   const filteredResidents = residents.filter(resident => {
     const matchesSearch = 
@@ -135,16 +149,16 @@ export const ResidentDirectory: React.FC = () => {
 
   const handleAddMember = (formData: any) => {
     console.log('Adding new member:', formData);
-    const newResident = {
+    const newResident: Resident = {
       id: Date.now().toString(),
       name: formData.fullName,
       flat: formData.flatNumber,
-      ownershipType: formData.ownershipType === 'owner' ? 'Owner' as const : 'Tenant' as const,
+      ownershipType: formData.ownershipType === 'owner' ? 'Owner' : 'Tenant',
       ownerSince: formData.moveInDate ? new Date(formData.moveInDate).getFullYear().toString() : '2025',
-      familySize: formData.familySize,
+      familySize: parseInt(formData.familySize) || 1,
       phone: formData.phone,
       email: formData.email,
-      paymentStatus: 'Paid' as const,
+      paymentStatus: 'Paid',
       lastPayment: 'Not yet paid',
     };
     setResidents(prev => [...prev, newResident]);
