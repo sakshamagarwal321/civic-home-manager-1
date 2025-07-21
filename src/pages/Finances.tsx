@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ExpenseCategoriesGrid } from '@/components/finances/ExpenseCategoriesGrid';
 import { RecentExpensesTable } from '@/components/finances/RecentExpensesTable';
+import { ExpenseEntryModal } from '@/components/finances/ExpenseEntryModal';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -17,6 +17,7 @@ import {
 
 const Finances: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState('January 2025');
+  const [showExpenseModal, setShowExpenseModal] = useState(false);
   
   const months = [
     'January 2025', 'December 2024', 'November 2024', 'October 2024'
@@ -51,7 +52,7 @@ const Finances: React.FC = () => {
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
-            <Button>
+            <Button onClick={() => setShowExpenseModal(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Add Expense
             </Button>
@@ -148,6 +149,12 @@ const Finances: React.FC = () => {
           <RecentExpensesTable />
         </div>
       </div>
+
+      {/* Expense Entry Modal */}
+      <ExpenseEntryModal 
+        open={showExpenseModal} 
+        onOpenChange={setShowExpenseModal} 
+      />
     </AppShell>
   );
 };
