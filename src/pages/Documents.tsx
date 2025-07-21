@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { Button } from '@/components/ui/button';
@@ -8,12 +7,16 @@ import { DocumentGrid } from '@/components/documents/DocumentGrid';
 import { DocumentStatsBar } from '@/components/documents/DocumentStatsBar';
 import { DocumentQuickActions } from '@/components/documents/DocumentQuickActions';
 import { DocumentSearchBar } from '@/components/documents/DocumentSearchBar';
+import { UploadDocumentModal } from '@/components/documents/UploadDocumentModal';
+import { DocumentViewer } from '@/components/documents/DocumentViewer';
 
 const Documents: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('Name');
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<any>(null);
 
   // Sample documents data
   const documents = [
@@ -115,6 +118,18 @@ const Documents: React.FC = () => {
     console.log('Delete document:', id);
   };
 
+  const handleUploadComplete = (files: any[]) => {
+    console.log('Upload completed:', files);
+    // Handle successful upload
+  };
+
+  const handleViewDocument = (id: string) => {
+    const doc = documents.find(d => d.id === id);
+    if (doc) {
+      setSelectedDocument(doc);
+    }
+  };
+
   const filteredDocuments = documents.filter(doc =>
     doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     doc.uploadedBy.toLowerCase().includes(searchTerm.toLowerCase())
@@ -141,7 +156,7 @@ const Documents: React.FC = () => {
                 <Download className="h-4 w-4 mr-2" />
                 Export All
               </Button>
-              <Button>
+              <Button onClick={() => setShowUploadModal(true)}>
                 <Upload className="h-4 w-4 mr-2" />
                 Upload Document
               </Button>
@@ -163,7 +178,7 @@ const Documents: React.FC = () => {
               
               <DocumentGrid
                 documents={filteredDocuments}
-                onView={handleView}
+                onView={handleViewDocument}
                 onDownload={handleDownload}
                 onShare={handleShare}
                 onEdit={handleEdit}
@@ -176,6 +191,22 @@ const Documents: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <UploadDocumentModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onUploadComplete={handleUploadComplete}
+      />
+
+      {selectedDocument && (
+        <DocumentViewer
+          isOpen={!!selectedDocument}
+          onClose={() => setSelectedDocument(null)}
+          document={selectedDocument}
+          onDownload={handleDownload}
+          onShare={handleShare}
+        />
+      )}
     </AppShell>
   );
 };
