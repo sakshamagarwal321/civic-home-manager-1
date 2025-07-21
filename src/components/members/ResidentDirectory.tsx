@@ -1,6 +1,8 @@
 
 import React, { useState } from 'react';
 import { ResidentCard } from './ResidentCard';
+import { AddMemberModal } from './AddMemberModal';
+import { MemberProfileModal } from './MemberProfileModal';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -16,6 +18,7 @@ const mockResidents = [
     ownerSince: '2018',
     familySize: 4,
     phone: '+91 9876543210',
+    email: 'rajesh.kumar@email.com',
     paymentStatus: 'Paid' as const,
     lastPayment: 'Jan 1, 2025 (₹3,500)',
     role: 'Secretary'
@@ -28,6 +31,7 @@ const mockResidents = [
     ownerSince: '2020',
     familySize: 3,
     phone: '+91 9876543211',
+    email: 'priya.sharma@email.com',
     paymentStatus: 'Overdue' as const,
     dueAmount: 7000,
   },
@@ -39,6 +43,7 @@ const mockResidents = [
     ownerSince: '2022',
     familySize: 2,
     phone: '+91 9876543212',
+    email: 'amit.patel@email.com',
     paymentStatus: 'Paid' as const,
     lastPayment: 'Dec 28, 2024 (₹3,500)',
   },
@@ -50,6 +55,7 @@ const mockResidents = [
     ownerSince: '2019',
     familySize: 5,
     phone: '+91 9876543213',
+    email: 'sunita.reddy@email.com',
     paymentStatus: 'Partial' as const,
     dueAmount: 1750,
   },
@@ -61,6 +67,7 @@ const mockResidents = [
     ownerSince: '2023',
     familySize: 2,
     phone: '+91 9876543214',
+    email: 'vikram.singh@email.com',
     paymentStatus: 'Paid' as const,
     lastPayment: 'Jan 2, 2025 (₹3,500)',
   },
@@ -72,6 +79,7 @@ const mockResidents = [
     ownerSince: '2017',
     familySize: 3,
     phone: '+91 9876543215',
+    email: 'meera.gupta@email.com',
     paymentStatus: 'Overdue' as const,
     dueAmount: 3500,
   },
@@ -81,8 +89,12 @@ export const ResidentDirectory: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [selectedResident, setSelectedResident] = useState<typeof mockResidents[0] | null>(null);
+  const [residents, setResidents] = useState(mockResidents);
 
-  const filteredResidents = mockResidents.filter(resident => {
+  const filteredResidents = residents.filter(resident => {
     const matchesSearch = 
       resident.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       resident.flat.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -95,14 +107,18 @@ export const ResidentDirectory: React.FC = () => {
   });
 
   // Calculate stats
-  const totalResidents = mockResidents.length;
-  const owners = mockResidents.filter(r => r.ownershipType === 'Owner').length;
-  const tenants = mockResidents.filter(r => r.ownershipType === 'Tenant').length;
-  const paymentDue = mockResidents.filter(r => r.paymentStatus === 'Overdue').length;
-  const fullyPaid = mockResidents.filter(r => r.paymentStatus === 'Paid').length;
+  const totalResidents = residents.length;
+  const owners = residents.filter(r => r.ownershipType === 'Owner').length;
+  const tenants = residents.filter(r => r.ownershipType === 'Tenant').length;
+  const paymentDue = residents.filter(r => r.paymentStatus === 'Overdue').length;
+  const fullyPaid = residents.filter(r => r.paymentStatus === 'Paid').length;
 
   const handleViewProfile = (id: string) => {
-    console.log('View profile for resident:', id);
+    const resident = residents.find(r => r.id === id);
+    if (resident) {
+      setSelectedResident(resident);
+      setShowProfileModal(true);
+    }
   };
 
   const handleSendMessage = (id: string) => {
@@ -115,6 +131,23 @@ export const ResidentDirectory: React.FC = () => {
 
   const handleSendReminder = (id: string) => {
     console.log('Send reminder to resident:', id);
+  };
+
+  const handleAddMember = (formData: any) => {
+    console.log('Adding new member:', formData);
+    const newResident = {
+      id: Date.now().toString(),
+      name: formData.fullName,
+      flat: formData.flatNumber,
+      ownershipType: formData.ownershipType === 'owner' ? 'Owner' as const : 'Tenant' as const,
+      ownerSince: formData.moveInDate ? new Date(formData.moveInDate).getFullYear().toString() : '2025',
+      familySize: formData.familySize,
+      phone: formData.phone,
+      email: formData.email,
+      paymentStatus: 'Paid' as const,
+      lastPayment: 'Not yet paid',
+    };
+    setResidents(prev => [...prev, newResident]);
   };
 
   return (
@@ -154,7 +187,7 @@ export const ResidentDirectory: React.FC = () => {
             </SelectContent>
           </Select>
         </div>
-        <Button>
+        <Button onClick={() => setShowAddModal(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Add Member
         </Button>
@@ -238,6 +271,25 @@ export const ResidentDirectory: React.FC = () => {
             Clear Filters
           </Button>
         </div>
+      )}
+
+      {/* Add Member Modal */}
+      <AddMemberModal
+        open={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSubmit={handleAddMember}
+      />
+
+      {/* Profile Modal */}
+      {selectedResident && (
+        <MemberProfileModal
+          open={showProfileModal}
+          onClose={() => {
+            setShowProfileModal(false);
+            setSelectedResident(null);
+          }}
+          resident={selectedResident}
+        />
       )}
     </div>
   );
