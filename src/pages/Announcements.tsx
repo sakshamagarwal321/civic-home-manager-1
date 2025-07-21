@@ -15,7 +15,7 @@ const Announcements: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
 
-  // Sample announcements data
+  // Sample announcements data with all categories
   const announcements = [
     {
       id: '1',
@@ -64,6 +64,37 @@ const Announcements: React.FC = () => {
       views: 52,
       acknowledgments: 28,
       comments: 0
+    },
+    {
+      id: '4',
+      title: 'Monthly Maintenance Charges Due',
+      content: 'Dear Residents, Monthly maintenance charges for February 2025 are now due. Please make payment by the 10th of the month to avoid late fees. New online payment portal is now available.',
+      category: 'Financial' as const,
+      priority: 'medium' as const,
+      author: 'Accounts Department',
+      authorRole: 'Treasurer',
+      postedAt: '5 days ago',
+      views: 92,
+      acknowledgments: 45,
+      comments: 3
+    },
+    {
+      id: '5',
+      title: 'Holi Celebration - March 14th',
+      content: 'Join us for the annual Holi celebration in the society premises on March 14th from 10:00 AM to 2:00 PM. Organic colors will be provided. Lunch will be served. Please register your family.',
+      category: 'Events' as const,
+      priority: 'low' as const,
+      author: 'Cultural Committee',
+      authorRole: 'Events Coordinator',
+      postedAt: '1 week ago',
+      views: 156,
+      acknowledgments: 67,
+      comments: 12,
+      rsvp: {
+        attending: 45,
+        notAttending: 12,
+        pending: 28
+      }
     }
   ];
 
