@@ -1,8 +1,7 @@
+
 import React from 'react';
 import { AppShell } from '@/components/layout/AppShell';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Plus, Search, Filter } from 'lucide-react';
+import { ResidentDirectory } from '@/components/members/ResidentDirectory';
 
 const Members: React.FC = () => {
   return (
@@ -15,32 +14,9 @@ const Members: React.FC = () => {
               Manage residents, track payments, and handle communications
             </p>
           </div>
-          <div className="flex space-x-2">
-            <Button variant="outline">
-              <Search className="h-4 w-4 mr-2" />
-              Search
-            </Button>
-            <Button variant="outline">
-              <Filter className="h-4 w-4 mr-2" />
-              Filter
-            </Button>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Member
-            </Button>
-          </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Resident Directory</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Member management features coming soon...
-            </p>
-          </CardContent>
-        </Card>
+        <ResidentDirectory />
       </div>
     </AppShell>
   );
