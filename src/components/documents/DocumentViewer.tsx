@@ -15,7 +15,7 @@ import {
   ZoomIn, 
   ZoomOut, 
   RotateCw, 
-  Print, 
+  Printer, 
   MessageSquare,
   Eye,
   X,

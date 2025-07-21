@@ -27,6 +27,17 @@ interface UploadFile {
   status: 'pending' | 'uploading' | 'completed' | 'error';
   error?: string;
   metadata?: {
+    title?: string;
+    category?: string;
+    subcategory?: string;
+    description?: string;
+    tags?: string[];
+    documentType?: 'Original' | 'Copy' | 'Amendment' | 'Translation';
+    accessLevel?: 'Public' | 'Members Only' | 'Committee' | 'Admin';
+    permissions?: string[];
+    expiryDate?: Date;
+    passwordProtected?: boolean;
+    downloadTracking?: boolean;
     author: string;
     creationDate: Date;
     relatedDocuments: string[];
@@ -51,6 +62,17 @@ export const MetadataReviewStep: React.FC<MetadataReviewStepProps> = ({
 }) => {
   const currentFile = files[selectedFileIndex];
   const currentMetadata = currentFile?.metadata || {
+    title: '',
+    category: '',
+    subcategory: '',
+    description: '',
+    tags: [],
+    documentType: 'Original' as const,
+    accessLevel: 'Public' as const,
+    permissions: [],
+    expiryDate: undefined,
+    passwordProtected: false,
+    downloadTracking: false,
     author: '',
     creationDate: new Date(),
     relatedDocuments: [],
@@ -265,7 +287,7 @@ export const MetadataReviewStep: React.FC<MetadataReviewStepProps> = ({
                     <div>
                       <h4 className="font-medium">{file.metadata?.title || file.file.name}</h4>
                       <p className="text-sm text-muted-foreground">
-                        {file.metadata?.category} • {file.metadata?.accessLevel}
+                        {file.metadata?.category || 'Uncategorized'} • {file.metadata?.accessLevel || 'Public'}
                       </p>
                     </div>
                   </div>
@@ -279,7 +301,7 @@ export const MetadataReviewStep: React.FC<MetadataReviewStepProps> = ({
                 
                 <div className="text-sm text-muted-foreground">
                   <p>Author: {file.metadata?.author}</p>
-                  <p>Type: {file.metadata?.documentType}</p>
+                  <p>Type: {file.metadata?.documentType || 'Original'}</p>
                   {file.metadata?.tags && file.metadata.tags.length > 0 && (
                     <p>Tags: {file.metadata.tags.join(', ')}</p>
                   )}
