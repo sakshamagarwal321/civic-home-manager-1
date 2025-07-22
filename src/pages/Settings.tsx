@@ -8,6 +8,7 @@ import { PropertyManagementSection } from '@/components/settings/PropertyManagem
 import { UserManagementSection } from '@/components/settings/UserManagementSection';
 import { NotificationPreferencesSection } from '@/components/settings/NotificationPreferencesSection';
 import { SystemConfigurationSection } from '@/components/settings/SystemConfigurationSection';
+import { ReportsAnalyticsSection } from '@/components/settings/ReportsAnalyticsSection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Settings: React.FC = () => {
@@ -41,18 +42,7 @@ const Settings: React.FC = () => {
       case 'system-config':
         return <SystemConfigurationSection />;
       case 'reports':
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Reports & Analytics</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Reports and analytics features coming soon...
-              </p>
-            </CardContent>
-          </Card>
-        );
+        return <ReportsAnalyticsSection />;
       case 'maintenance':
         return (
           <Card>
