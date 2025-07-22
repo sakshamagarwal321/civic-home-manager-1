@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, MapPin, Calendar, Building2, Phone, Mail, Globe } from 'lucide-react';
+import { Upload, MapPin, Calendar, Building2, Phone, Mail, Globe, Users } from 'lucide-react';
 
 export const SocietyInformationSection: React.FC = () => {
   const [societyData, setSocietyData] = useState({
