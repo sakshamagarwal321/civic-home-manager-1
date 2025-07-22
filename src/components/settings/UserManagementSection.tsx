@@ -27,6 +27,10 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { UserProfileModal } from './UserProfileModal';
+
+type UserRole = 'super_admin' | 'committee_member' | 'treasurer' | 'resident_owner' | 'resident_tenant' | 'staff_member';
+type AccountStatus = 'active' | 'inactive' | 'suspended' | 'pending_approval';
 
 interface User {
   id: string;
@@ -35,8 +39,8 @@ interface User {
   phone?: string;
   flat_number?: string;
   block?: string;
-  role: string;
-  account_status: string;
+  role: UserRole;
+  account_status: AccountStatus;
   profile_photo_url?: string;
   last_active?: string;
   created_at: string;
@@ -55,9 +59,11 @@ interface UserStats {
 
 export const UserManagementSection: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<AccountStatus | 'all'>('all');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Fetch users
   const { data: users = [], isLoading: usersLoading, refetch: refetchUsers } = useQuery({
@@ -72,11 +78,11 @@ export const UserManagementSection: React.FC = () => {
       }
 
       if (roleFilter !== 'all') {
-        query = query.eq('role', roleFilter);
+        query = query.eq('role', roleFilter as UserRole);
       }
 
       if (statusFilter !== 'all') {
-        query = query.eq('account_status', statusFilter);
+        query = query.eq('account_status', statusFilter as AccountStatus);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -114,7 +120,7 @@ export const UserManagementSection: React.FC = () => {
     }
   });
 
-  const getRoleBadgeVariant = (role: string) => {
+  const getRoleBadgeVariant = (role: UserRole) => {
     switch (role) {
       case 'super_admin': return 'destructive';
       case 'committee_member': return 'default';
@@ -126,7 +132,7 @@ export const UserManagementSection: React.FC = () => {
     }
   };
 
-  const getStatusBadgeVariant = (status: string) => {
+  const getStatusBadgeVariant = (status: AccountStatus) => {
     switch (status) {
       case 'active': return 'default';
       case 'pending_approval': return 'secondary';
@@ -136,13 +142,13 @@ export const UserManagementSection: React.FC = () => {
     }
   };
 
-  const formatRole = (role: string) => {
+  const formatRole = (role: UserRole) => {
     return role.split('_').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
   };
 
-  const formatStatus = (status: string) => {
+  const formatStatus = (status: AccountStatus) => {
     return status.split('_').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
@@ -167,6 +173,11 @@ export const UserManagementSection: React.FC = () => {
     } else {
       setSelectedUsers(users.map(user => user.id));
     }
+  };
+
+  const handleViewProfile = (userId: string) => {
+    setSelectedUserId(userId);
+    setIsProfileModalOpen(true);
   };
 
   return (
@@ -266,7 +277,7 @@ export const UserManagementSection: React.FC = () => {
                 />
               </div>
             </div>
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <Select value={roleFilter} onValueChange={(value: UserRole | 'all') => setRoleFilter(value)}>
               <SelectTrigger className="w-48">
                 <Filter className="mr-2 h-4 w-4" />
                 <SelectValue placeholder="Filter by role" />
@@ -281,7 +292,7 @@ export const UserManagementSection: React.FC = () => {
                 <SelectItem value="staff_member">Staff Member</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(value: AccountStatus | 'all') => setStatusFilter(value)}>
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
@@ -405,7 +416,7 @@ export const UserManagementSection: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-1">
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => handleViewProfile(user.id)}>
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="sm">
@@ -497,6 +508,16 @@ export const UserManagementSection: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* User Profile Modal */}
+      <UserProfileModal
+        userId={selectedUserId}
+        isOpen={isProfileModalOpen}
+        onClose={() => {
+          setIsProfileModalOpen(false);
+          setSelectedUserId(null);
+        }}
+      />
     </div>
   );
 };

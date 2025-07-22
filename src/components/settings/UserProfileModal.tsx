@@ -28,6 +28,9 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 
+type UserRole = 'super_admin' | 'committee_member' | 'treasurer' | 'resident_owner' | 'resident_tenant' | 'staff_member';
+type AccountStatus = 'active' | 'inactive' | 'suspended' | 'pending_approval';
+
 interface UserProfileModalProps {
   userId: string | null;
   isOpen: boolean;
@@ -42,8 +45,8 @@ interface UserProfile {
   emergency_contact?: string;
   flat_number?: string;
   block?: string;
-  role: string;
-  account_status: string;
+  role: UserRole;
+  account_status: AccountStatus;
   profile_photo_url?: string;
   is_owner: boolean;
   created_at: string;
@@ -74,7 +77,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   onClose
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<Partial<UserProfile>>({});
+  const [formData, setFormData] = useState<UserProfile | null>(null);
 
   // Fetch user profile
   const { data: user, isLoading, refetch } = useQuery({
@@ -144,7 +147,17 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     try {
       const { error } = await supabase
         .from('profiles')
-        .update(formData)
+        .update({
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          phone: formData.phone,
+          emergency_contact: formData.emergency_contact,
+          flat_number: formData.flat_number,
+          block: formData.block,
+          role: formData.role,
+          account_status: formData.account_status,
+          is_owner: formData.is_owner
+        })
         .eq('id', userId);
 
       if (error) throw error;
@@ -156,23 +169,24 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     }
   };
 
-  const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (field: keyof UserProfile, value: any) => {
+    if (!formData) return;
+    setFormData(prev => prev ? { ...prev, [field]: value } : null);
   };
 
-  const formatRole = (role: string) => {
+  const formatRole = (role: UserRole) => {
     return role.split('_').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
   };
 
-  const formatStatus = (status: string) => {
+  const formatStatus = (status: AccountStatus) => {
     return status.split('_').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
   };
 
-  const getRoleColor = (role: string) => {
+  const getRoleColor = (role: UserRole) => {
     switch (role) {
       case 'super_admin': return 'text-red-600';
       case 'committee_member': return 'text-blue-600';
@@ -200,7 +214,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           <div className="flex items-center justify-center py-8">
             <div className="text-muted-foreground">Loading user profile...</div>
           </div>
-        ) : user ? (
+        ) : user && formData ? (
           <Tabs defaultValue="profile" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -295,7 +309,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                           <Label htmlFor="role">Role</Label>
                           <Select
                             value={formData.role}
-                            onValueChange={(value) => handleInputChange('role', value)}
+                            onValueChange={(value: UserRole) => handleInputChange('role', value)}
                             disabled={!isEditing}
                           >
                             <SelectTrigger>
@@ -315,7 +329,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                           <Label htmlFor="account_status">Account Status</Label>
                           <Select
                             value={formData.account_status}
-                            onValueChange={(value) => handleInputChange('account_status', value)}
+                            onValueChange={(value: AccountStatus) => handleInputChange('account_status', value)}
                             disabled={!isEditing}
                           >
                             <SelectTrigger>
