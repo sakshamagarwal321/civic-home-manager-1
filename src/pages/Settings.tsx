@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { SettingsSidebar } from '@/components/settings/SettingsSidebar';
@@ -5,6 +6,8 @@ import { SocietyInformationSection } from '@/components/settings/SocietyInformat
 import { FinancialSettingsSection } from '@/components/settings/FinancialSettingsSection';
 import { PropertyManagementSection } from '@/components/settings/PropertyManagementSection';
 import { UserManagementSection } from '@/components/settings/UserManagementSection';
+import { NotificationPreferencesSection } from '@/components/settings/NotificationPreferencesSection';
+import { SystemConfigurationSection } from '@/components/settings/SystemConfigurationSection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Settings: React.FC = () => {
@@ -21,18 +24,7 @@ const Settings: React.FC = () => {
       case 'property-management':
         return <PropertyManagementSection />;
       case 'notifications':
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Notification settings coming soon...
-              </p>
-            </CardContent>
-          </Card>
-        );
+        return <NotificationPreferencesSection />;
       case 'security':
         return (
           <Card>
@@ -47,18 +39,7 @@ const Settings: React.FC = () => {
           </Card>
         );
       case 'system-config':
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>System Configuration</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                System configuration options coming soon...
-              </p>
-            </CardContent>
-          </Card>
-        );
+        return <SystemConfigurationSection />;
       case 'reports':
         return (
           <Card>
