@@ -1,38 +1,124 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
+import { SettingsSidebar } from '@/components/settings/SettingsSidebar';
+import { SocietyInformationSection } from '@/components/settings/SocietyInformationSection';
+import { FinancialSettingsSection } from '@/components/settings/FinancialSettingsSection';
+import { PropertyManagementSection } from '@/components/settings/PropertyManagementSection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Settings as SettingsIcon, Save, Users } from 'lucide-react';
 
 const Settings: React.FC = () => {
+  const [activeSection, setActiveSection] = useState('society-info');
+
+  const renderActiveSection = () => {
+    switch (activeSection) {
+      case 'society-info':
+        return <SocietyInformationSection />;
+      case 'financial-settings':
+        return <FinancialSettingsSection />;
+      case 'property-management':
+        return <PropertyManagementSection />;
+      case 'user-management':
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>User Management</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                User management features coming soon...
+              </p>
+            </CardContent>
+          </Card>
+        );
+      case 'notifications':
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Notification Preferences</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Notification settings coming soon...
+              </p>
+            </CardContent>
+          </Card>
+        );
+      case 'security':
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Security & Privacy</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Security settings coming soon...
+              </p>
+            </CardContent>
+          </Card>
+        );
+      case 'system-config':
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>System Configuration</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                System configuration options coming soon...
+              </p>
+            </CardContent>
+          </Card>
+        );
+      case 'reports':
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Reports & Analytics</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Reports and analytics features coming soon...
+              </p>
+            </CardContent>
+          </Card>
+        );
+      case 'maintenance':
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Maintenance & Backup</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Maintenance and backup options coming soon...
+              </p>
+            </CardContent>
+          </Card>
+        );
+      default:
+        return <SocietyInformationSection />;
+    }
+  };
+
   return (
     <AppShell>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Settings</h1>
-            <p className="text-muted-foreground">
-              Configure society settings, user permissions, and system preferences
-            </p>
-          </div>
-          <div className="flex space-x-2">
-            <Button>
-              <Save className="h-4 w-4 mr-2" />
-              Save Changes
-            </Button>
+      <div className="flex h-full">
+        <SettingsSidebar 
+          activeSection={activeSection} 
+          onSectionChange={setActiveSection} 
+        />
+        <div className="flex-1 overflow-auto">
+          <div className="p-6">
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold">Settings</h1>
+              <p className="text-muted-foreground">
+                Configure society settings, user permissions, and system preferences
+              </p>
+            </div>
+            {renderActiveSection()}
           </div>
         </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Society Configuration</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Settings and configuration features coming soon...
-            </p>
-          </CardContent>
-        </Card>
       </div>
     </AppShell>
   );
