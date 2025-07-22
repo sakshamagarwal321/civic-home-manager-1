@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { SettingsSidebar } from '@/components/settings/SettingsSidebar';
 import { SocietyInformationSection } from '@/components/settings/SocietyInformationSection';
 import { FinancialSettingsSection } from '@/components/settings/FinancialSettingsSection';
 import { PropertyManagementSection } from '@/components/settings/PropertyManagementSection';
+import { UserManagementSection } from '@/components/settings/UserManagementSection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Settings: React.FC = () => {
@@ -14,23 +14,12 @@ const Settings: React.FC = () => {
     switch (activeSection) {
       case 'society-info':
         return <SocietyInformationSection />;
+      case 'user-management':
+        return <UserManagementSection />;
       case 'financial-settings':
         return <FinancialSettingsSection />;
       case 'property-management':
         return <PropertyManagementSection />;
-      case 'user-management':
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>User Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                User management features coming soon...
-              </p>
-            </CardContent>
-          </Card>
-        );
       case 'notifications':
         return (
           <Card>

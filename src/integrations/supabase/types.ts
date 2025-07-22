@@ -14,16 +14,179 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          account_status: Database["public"]["Enums"]["account_status"]
+          block: string | null
+          created_at: string | null
+          emergency_contact: string | null
+          first_name: string
+          flat_number: string | null
+          id: string
+          is_owner: boolean | null
+          last_name: string
+          phone: string | null
+          profile_photo_url: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          account_status?: Database["public"]["Enums"]["account_status"]
+          block?: string | null
+          created_at?: string | null
+          emergency_contact?: string | null
+          first_name: string
+          flat_number?: string | null
+          id: string
+          is_owner?: boolean | null
+          last_name: string
+          phone?: string | null
+          profile_photo_url?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          account_status?: Database["public"]["Enums"]["account_status"]
+          block?: string | null
+          created_at?: string | null
+          emergency_contact?: string | null
+          first_name?: string
+          flat_number?: string | null
+          id?: string
+          is_owner?: boolean | null
+          last_name?: string
+          phone?: string | null
+          profile_photo_url?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      role_permissions: {
+        Row: {
+          approval_limit: number | null
+          can_approve: boolean | null
+          can_delete: boolean | null
+          can_read: boolean | null
+          can_write: boolean | null
+          created_at: string | null
+          id: string
+          module: string
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Insert: {
+          approval_limit?: number | null
+          can_approve?: boolean | null
+          can_delete?: boolean | null
+          can_read?: boolean | null
+          can_write?: boolean | null
+          created_at?: string | null
+          id?: string
+          module: string
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Update: {
+          approval_limit?: number | null
+          can_approve?: boolean | null
+          can_delete?: boolean | null
+          can_read?: boolean | null
+          can_write?: boolean | null
+          created_at?: string | null
+          id?: string
+          module?: string
+          role?: Database["public"]["Enums"]["user_role"]
+        }
+        Relationships: []
+      }
+      user_activity_log: {
+        Row: {
+          action: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          ip_address: unknown | null
+          module: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          module?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          module?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          created_at: string | null
+          device_info: string | null
+          id: string
+          ip_address: unknown | null
+          last_active: string | null
+          session_token: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          device_info?: string | null
+          id?: string
+          ip_address?: unknown | null
+          last_active?: string | null
+          session_token: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          device_info?: string | null
+          id?: string
+          ip_address?: unknown | null
+          last_active?: string | null
+          session_token?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { user_id: string }
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
+      log_user_activity: {
+        Args: {
+          p_user_id: string
+          p_action: string
+          p_module?: string
+          p_details?: Json
+          p_ip_address?: unknown
+        }
+        Returns: undefined
+      }
     }
     Enums: {
-      [_ in never]: never
+      account_status: "active" | "inactive" | "suspended" | "pending_approval"
+      user_role:
+        | "super_admin"
+        | "committee_member"
+        | "treasurer"
+        | "resident_owner"
+        | "resident_tenant"
+        | "staff_member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +313,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      account_status: ["active", "inactive", "suspended", "pending_approval"],
+      user_role: [
+        "super_admin",
+        "committee_member",
+        "treasurer",
+        "resident_owner",
+        "resident_tenant",
+        "staff_member",
+      ],
+    },
   },
 } as const
