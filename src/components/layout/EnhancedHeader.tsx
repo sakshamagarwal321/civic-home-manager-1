@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { LanguageToggle } from '@/components/ui/language-toggle';
 import { MobileSidebar } from '@/components/ui/mobile-sidebar';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +18,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export const EnhancedHeader: React.FC = () => {
+  const { t } = useLanguage();
+
   return (
     <header className="bg-card border-b border-border px-4 md:px-6 py-4 sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-card/60">
       <div className="flex items-center justify-between">
@@ -25,13 +29,14 @@ export const EnhancedHeader: React.FC = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               type="search"
-              placeholder="Search residents, expenses, facilities..."
+              placeholder={t('common.search')}
               className="pl-10 w-64 md:w-96"
             />
           </div>
         </div>
         
         <div className="flex items-center space-x-2 md:space-x-4">
+          <LanguageToggle />
           <ThemeToggle />
           
           <Button variant="ghost" size="icon" className="relative">

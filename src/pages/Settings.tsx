@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { AppShell } from '@/components/layout/AppShell';
+import { EnhancedAppShell } from '@/components/layout/EnhancedAppShell';
 import { SettingsSidebar } from '@/components/settings/SettingsSidebar';
 import { SocietyInformationSection } from '@/components/settings/SocietyInformationSection';
 import { FinancialSettingsSection } from '@/components/settings/FinancialSettingsSection';
@@ -62,15 +62,25 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <AppShell>
-      <div className="flex h-full">
+    <EnhancedAppShell>
+      <div className="flex flex-col lg:flex-row h-full">
+        <div className="lg:hidden mb-6">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold">Settings</h1>
+            <p className="text-muted-foreground">
+              Configure society settings, user permissions, and system preferences
+            </p>
+          </div>
+        </div>
+        
         <SettingsSidebar 
           activeSection={activeSection} 
           onSectionChange={setActiveSection} 
         />
+        
         <div className="flex-1 overflow-auto">
           <div className="p-6">
-            <div className="mb-6">
+            <div className="hidden lg:block mb-6">
               <h1 className="text-2xl font-bold">Settings</h1>
               <p className="text-muted-foreground">
                 Configure society settings, user permissions, and system preferences
@@ -80,7 +90,7 @@ const Settings: React.FC = () => {
           </div>
         </div>
       </div>
-    </AppShell>
+    </EnhancedAppShell>
   );
 };
 

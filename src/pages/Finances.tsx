@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { AppShell } from '@/components/layout/AppShell';
+import { EnhancedAppShell } from '@/components/layout/EnhancedAppShell';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { EnhancedButton } from '@/components/ui/enhanced-button';
 import { Plus, Download, Filter, ChevronDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -35,44 +35,44 @@ const Finances: React.FC = () => {
   const budgetUtilization = (monthlyMetrics.totalExpenses / monthlyMetrics.budgetAllocated) * 100;
 
   return (
-    <AppShell>
-      <div className="flex gap-6">
+    <EnhancedAppShell>
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Main Content */}
         <div className="flex-1 space-y-6">
           {/* Page Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold">Financial Management</h1>
               <p className="text-muted-foreground">
                 Track expenses, manage budgets, and monitor society finances
               </p>
             </div>
-            <div className="flex space-x-2">
-              <Button variant="outline">
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
+              <EnhancedButton variant="outline" className="w-full sm:w-auto">
                 <Filter className="h-4 w-4 mr-2" />
                 Filter
-              </Button>
-              <Button variant="outline">
+              </EnhancedButton>
+              <EnhancedButton variant="outline" className="w-full sm:w-auto">
                 <Download className="h-4 w-4 mr-2" />
                 Export
-              </Button>
-              <Button onClick={() => setShowExpenseModal(true)}>
+              </EnhancedButton>
+              <EnhancedButton onClick={() => setShowExpenseModal(true)} className="w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Expense
-              </Button>
+              </EnhancedButton>
             </div>
           </div>
 
           {/* Monthly Summary Section */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <h2 className="text-lg font-semibold">Monthly Summary</h2>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-48">
+                  <EnhancedButton variant="outline" className="w-full sm:w-48">
                     {selectedMonth}
                     <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
+                  </EnhancedButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   {months.map((month) => (
@@ -88,23 +88,23 @@ const Finances: React.FC = () => {
             </div>
 
             {/* Key Metrics Row */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
                 <CardContent className="p-4">
                   <div className="text-sm text-muted-foreground">Total Expenses</div>
-                  <div className="text-2xl font-bold">₹{monthlyMetrics.totalExpenses.toLocaleString()}</div>
+                  <div className="text-xl lg:text-2xl font-bold">₹{monthlyMetrics.totalExpenses.toLocaleString()}</div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4">
                   <div className="text-sm text-muted-foreground">Budget Allocated</div>
-                  <div className="text-2xl font-bold">₹{monthlyMetrics.budgetAllocated.toLocaleString()}</div>
+                  <div className="text-xl lg:text-2xl font-bold">₹{monthlyMetrics.budgetAllocated.toLocaleString()}</div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4">
                   <div className="text-sm text-muted-foreground">Variance</div>
-                  <div className="text-2xl font-bold text-green-600">
+                  <div className="text-xl lg:text-2xl font-bold text-green-600">
                     ₹{Math.abs(monthlyMetrics.variance).toLocaleString()}
                     <span className="text-sm font-normal ml-1">under budget</span>
                   </div>
@@ -113,7 +113,7 @@ const Finances: React.FC = () => {
               <Card>
                 <CardContent className="p-4">
                   <div className="text-sm text-muted-foreground">Pending Approvals</div>
-                  <div className="text-2xl font-bold text-orange-600">
+                  <div className="text-xl lg:text-2xl font-bold text-orange-600">
                     ₹{monthlyMetrics.pendingApprovals.toLocaleString()}
                   </div>
                 </CardContent>
@@ -155,7 +155,7 @@ const Finances: React.FC = () => {
         </div>
 
         {/* Right Sidebar - Quick Actions */}
-        <div className="w-80 flex-shrink-0">
+        <div className="w-full lg:w-80 flex-shrink-0">
           <QuickActionsPanel />
         </div>
       </div>
@@ -165,7 +165,7 @@ const Finances: React.FC = () => {
         open={showExpenseModal} 
         onOpenChange={setShowExpenseModal} 
       />
-    </AppShell>
+    </EnhancedAppShell>
   );
 };
 

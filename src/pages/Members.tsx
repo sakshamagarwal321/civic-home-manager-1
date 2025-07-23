@@ -1,11 +1,11 @@
 
 import React from 'react';
-import { AppShell } from '@/components/layout/AppShell';
+import { EnhancedAppShell } from '@/components/layout/EnhancedAppShell';
 import { ResidentDirectory } from '@/components/members/ResidentDirectory';
 
 const Members: React.FC = () => {
   return (
-    <AppShell>
+    <EnhancedAppShell>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -18,7 +18,7 @@ const Members: React.FC = () => {
 
         <ResidentDirectory />
       </div>
-    </AppShell>
+    </EnhancedAppShell>
   );
 };
 
