@@ -35,6 +35,13 @@ interface FormData {
   targetAudience: string[];
 }
 
+interface FormErrors {
+  title?: string;
+  message?: string;
+  category?: string;
+  targetAudience?: string;
+}
+
 export const QuickAnnouncementModal: React.FC<QuickAnnouncementModalProps> = ({ 
   open, 
   onOpenChange 
@@ -47,7 +54,7 @@ export const QuickAnnouncementModal: React.FC<QuickAnnouncementModalProps> = ({
     targetAudience: []
   });
 
-  const [errors, setErrors] = useState<Partial<FormData>>({});
+  const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const categories = [
@@ -70,7 +77,7 @@ export const QuickAnnouncementModal: React.FC<QuickAnnouncementModalProps> = ({
   ];
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    const newErrors: FormErrors = {};
 
     if (!formData.title.trim()) {
       newErrors.title = 'Title is required';

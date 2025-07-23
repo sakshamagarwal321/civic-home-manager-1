@@ -35,6 +35,12 @@ interface FormData {
   format: 'pdf' | 'excel';
 }
 
+interface FormErrors {
+  reportType?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
 export const QuickReportModal: React.FC<QuickReportModalProps> = ({ 
   open, 
   onOpenChange 
@@ -46,7 +52,7 @@ export const QuickReportModal: React.FC<QuickReportModalProps> = ({
     format: 'pdf'
   });
 
-  const [errors, setErrors] = useState<Partial<FormData>>({});
+  const [errors, setErrors] = useState<FormErrors>({});
   const [isGenerating, setIsGenerating] = useState(false);
 
   const reportTypes = [
@@ -59,7 +65,7 @@ export const QuickReportModal: React.FC<QuickReportModalProps> = ({
   ];
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    const newErrors: FormErrors = {};
 
     if (!formData.reportType) {
       newErrors.reportType = 'Report type is required';
@@ -153,7 +159,7 @@ export const QuickReportModal: React.FC<QuickReportModalProps> = ({
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.startDate ? format(formData.startDate, "MMM dd") : <span>Start date</span>}
+                    {formData.startDate ? format(formData.startDate, "MMM dd") : "Start date"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -179,7 +185,7 @@ export const QuickReportModal: React.FC<QuickReportModalProps> = ({
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.endDate ? format(formData.endDate, "MMM dd") : <span>End date</span>}
+                    {formData.endDate ? format(formData.endDate, "MMM dd") : "End date"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
