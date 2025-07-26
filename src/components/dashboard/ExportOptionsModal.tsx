@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { CalendarIcon, Download, FileText, Mail, Clock } from 'lucide-react';
-import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
+import { format as formatDate, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
 
 interface ExportOptionsModalProps {
@@ -76,10 +76,10 @@ export const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({
     { value: 'category-breakdown', label: 'Category-wise Breakdown', description: 'Expenses grouped by category' }
   ];
 
-  const handleFormatChange = (format: keyof typeof formData.formats, checked: boolean) => {
+  const handleFormatChange = (formatType: keyof typeof formData.formats, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
-      formats: { ...prev.formats, [format]: checked }
+      formats: { ...prev.formats, [formatType]: checked }
     }));
   };
 
@@ -111,7 +111,7 @@ export const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({
     return interval;
   };
 
-  const generateFileName = (format: string) => {
+  const generateFileName = (fileFormat: string) => {
     const reportTypeMap = {
       'current-month': 'MonthlyReport',
       'detailed': 'DetailedExpenses',
@@ -120,16 +120,16 @@ export const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({
     };
     
     const reportName = reportTypeMap[formData.reportType as keyof typeof reportTypeMap] || 'FinancialReport';
-    const dateStr = format(formData.dateRange.from, 'MMMyyyy');
-    const timestamp = format(new Date(), 'yyyyMMdd_HHmm');
+    const dateStr = formatDate(formData.dateRange.from, 'MMMyyyy');
+    const timestamp = formatDate(new Date(), 'yyyyMMdd_HHmm');
     
-    return `${reportName}_${dateStr}_${timestamp}.${format}`;
+    return `${reportName}_${dateStr}_${timestamp}.${fileFormat}`;
   };
 
   const handleExport = async () => {
     const selectedFormats = Object.entries(formData.formats)
       .filter(([_, selected]) => selected)
-      .map(([format]) => format);
+      .map(([formatType]) => formatType);
 
     if (selectedFormats.length === 0) {
       toast({
@@ -148,14 +148,14 @@ export const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({
       await new Promise(resolve => setTimeout(resolve, 3000));
 
       // Generate and download files
-      for (const format of selectedFormats) {
-        const fileName = generateFileName(format);
+      for (const fileFormat of selectedFormats) {
+        const fileName = generateFileName(fileFormat);
         
         // Create a mock file content based on format
         let content = '';
         let mimeType = '';
         
-        switch (format) {
+        switch (fileFormat) {
           case 'pdf':
             content = 'Mock PDF content for financial report';
             mimeType = 'application/pdf';
@@ -246,15 +246,15 @@ export const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({
           <div>
             <Label className="text-base font-medium">Export Format</Label>
             <div className="grid grid-cols-3 gap-4 mt-3">
-              {Object.entries(formData.formats).map(([format, selected]) => (
-                <div key={format} className="flex items-center space-x-2 p-3 border rounded-lg">
+              {Object.entries(formData.formats).map(([formatType, selected]) => (
+                <div key={formatType} className="flex items-center space-x-2 p-3 border rounded-lg">
                   <Checkbox 
-                    id={format}
+                    id={formatType}
                     checked={selected}
-                    onCheckedChange={(checked) => handleFormatChange(format as keyof typeof formData.formats, checked as boolean)}
+                    onCheckedChange={(checked) => handleFormatChange(formatType as keyof typeof formData.formats, checked as boolean)}
                   />
-                  <Label htmlFor={format} className="font-medium capitalize cursor-pointer">
-                    {format.toUpperCase()}
+                  <Label htmlFor={formatType} className="font-medium capitalize cursor-pointer">
+                    {formatType.toUpperCase()}
                   </Label>
                 </div>
               ))}
@@ -292,7 +292,7 @@ export const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.dateRange.from ? format(formData.dateRange.from, "MMM dd, yyyy") : "Select date"}
+                        {formData.dateRange.from ? formatDate(formData.dateRange.from, "MMM dd, yyyy") : "Select date"}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -321,7 +321,7 @@ export const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.dateRange.to ? format(formData.dateRange.to, "MMM dd, yyyy") : "Select date"}
+                        {formData.dateRange.to ? formatDate(formData.dateRange.to, "MMM dd, yyyy") : "Select date"}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
