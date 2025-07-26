@@ -1,14 +1,38 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { TrendingUp, TrendingDown, IndianRupee, Users, Check, Bell, Plus, Send, AlertCircle } from 'lucide-react';
+import { SendReminderModal } from './SendReminderModal';
+import { QuickExpenseModal } from './QuickExpenseModal';
 
 const FinancialOverview: React.FC = () => {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const [expenses, setExpenses] = useState(187500);
+  const navigate = useNavigate();
+
+  const handleExpenseAdded = (expense: any) => {
+    setExpenses(prev => prev + expense.amount);
+  };
+
+  const handleCardClick = (cardId: string) => {
+    switch (cardId) {
+      case 'dues':
+        navigate('/members?filter=overdue');
+        break;
+      case 'expenses':
+        navigate('/finances');
+        break;
+      default:
+        setSelectedCard(cardId);
+    }
+  };
 
   // Collection Details Modal Component
   const CollectionDetailsModal = () => (
@@ -187,17 +211,19 @@ const FinancialOverview: React.FC = () => {
       changeType: 'positive' as const,
       icon: Users,
       hasAlert: true,
-      modal: OutstandingDuesModal
+      modal: OutstandingDuesModal,
+      clickable: true
     },
     {
       id: 'expenses',
       title: 'This Month Expenses',
-      value: '₹1,87,500',
+      value: `₹${expenses.toLocaleString()}`,
       change: '₹12,500 under budget',
       changeType: 'positive' as const,
       icon: TrendingDown,
       budgetVariance: -12500,
-      showMiniChart: true
+      showMiniChart: true,
+      clickable: true
     },
     {
       id: 'approvals',
@@ -213,102 +239,120 @@ const FinancialOverview: React.FC = () => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {financialData.map((item) => (
-        <Dialog key={item.id} open={selectedCard === item.id} onOpenChange={(open) => setSelectedCard(open ? item.id : null)}>
-          <DialogTrigger asChild>
-            <Card className="dashboard-card hover-lift cursor-pointer transition-all duration-200 hover:shadow-lg">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {item.title}
-                </CardTitle>
-                <div className="relative">
-                  <item.icon className="h-4 w-4 text-muted-foreground" />
-                  {item.hasNotification && (
-                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold font-mono">{item.value}</div>
-                {item.subtitle && (
-                  <p className="text-xs text-muted-foreground mt-1 hover:text-primary transition-colors">
-                    {item.subtitle}
-                  </p>
-                )}
-                
-                {/* Collection Progress */}
-                {item.id === 'collection' && item.target && item.current && (
-                  <div className="mt-2">
-                    <Progress value={(item.current / item.target) * 100} className="h-1" />
-                  </div>
-                )}
-
-                {/* Expenses Budget Indicator */}
-                {item.id === 'expenses' && item.budgetVariance && (
-                  <div className="mt-2 flex items-center">
-                    <Check className="h-3 w-3 text-success mr-1" />
-                    <span className="text-xs text-success">Under Budget</span>
-                  </div>
-                )}
-
-                {/* Outstanding Dues Alert */}
-                {item.id === 'dues' && item.hasAlert && (
-                  <div className="mt-2 flex items-center">
-                    <AlertCircle className="h-3 w-3 text-orange-500 mr-1" />
-                    <span className="text-xs text-orange-500">Action Required</span>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between mt-2">
-                  <p className={`text-xs ${
-                    item.changeType === 'positive' ? 'financial-positive' : 'financial-neutral'
-                  } flex items-center`}>
-                    {item.changeType === 'positive' && item.change.includes('+') && (
-                      <TrendingUp className="h-3 w-3 mr-1" />
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {financialData.map((item) => (
+          <Dialog key={item.id} open={selectedCard === item.id} onOpenChange={(open) => setSelectedCard(open ? item.id : null)}>
+            <DialogTrigger asChild>
+              <Card 
+                className={`dashboard-card hover-lift transition-all duration-200 hover:shadow-lg ${
+                  item.clickable ? 'cursor-pointer hover:scale-105' : 'cursor-pointer'
+                } active:scale-95`}
+                onClick={() => handleCardClick(item.id)}
+              >
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {item.title}
+                  </CardTitle>
+                  <div className="relative">
+                    <item.icon className="h-4 w-4 text-muted-foreground" />
+                    {item.hasNotification && (
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
                     )}
-                    {item.change}
-                  </p>
-                  
-                  {/* Quick Actions */}
-                  {item.id === 'dues' && (
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      className="h-6 px-2 text-xs"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Handle send reminders
-                      }}
-                    >
-                      <Send className="h-3 w-3 mr-1" />
-                      Remind
-                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold font-mono">{item.value}</div>
+                  {item.subtitle && (
+                    <p className="text-xs text-muted-foreground mt-1 hover:text-primary transition-colors">
+                      {item.subtitle}
+                    </p>
                   )}
                   
-                  {item.id === 'expenses' && (
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      className="h-6 px-2 text-xs"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Handle add expense
-                      }}
-                    >
-                      <Plus className="h-3 w-3 mr-1" />
-                      Add
-                    </Button>
+                  {/* Collection Progress */}
+                  {item.id === 'collection' && item.target && item.current && (
+                    <div className="mt-2">
+                      <Progress value={(item.current / item.target) * 100} className="h-1" />
+                    </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
-          </DialogTrigger>
-          
-          {item.modal && <item.modal />}
-        </Dialog>
-      ))}
-    </div>
+
+                  {/* Expenses Budget Indicator */}
+                  {item.id === 'expenses' && item.budgetVariance && (
+                    <div className="mt-2 flex items-center">
+                      <Check className="h-3 w-3 text-success mr-1" />
+                      <span className="text-xs text-success">Under Budget</span>
+                    </div>
+                  )}
+
+                  {/* Outstanding Dues Alert */}
+                  {item.id === 'dues' && item.hasAlert && (
+                    <div className="mt-2 flex items-center">
+                      <AlertCircle className="h-3 w-3 text-orange-500 mr-1" />
+                      <span className="text-xs text-orange-500">Action Required</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between mt-2">
+                    <p className={`text-xs ${
+                      item.changeType === 'positive' ? 'financial-positive' : 'financial-neutral'
+                    } flex items-center`}>
+                      {item.changeType === 'positive' && item.change.includes('+') && (
+                        <TrendingUp className="h-3 w-3 mr-1" />
+                      )}
+                      {item.change}
+                    </p>
+                    
+                    {/* Quick Action Buttons */}
+                    {item.id === 'dues' && (
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="h-6 px-2 text-xs transition-all duration-200 hover:bg-blue-50 hover:text-blue-600 hover:scale-105 active:scale-95"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowReminderModal(true);
+                        }}
+                      >
+                        <Send className="h-3 w-3 mr-1" />
+                        Remind
+                      </Button>
+                    )}
+                    
+                    {item.id === 'expenses' && (
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="h-6 px-2 text-xs transition-all duration-200 hover:bg-green-50 hover:text-green-600 hover:scale-105 active:scale-95"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowExpenseModal(true);
+                        }}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </DialogTrigger>
+            
+            {item.modal && <item.modal />}
+          </Dialog>
+        ))}
+      </div>
+
+      {/* Modals */}
+      <SendReminderModal 
+        open={showReminderModal} 
+        onOpenChange={setShowReminderModal} 
+      />
+      <QuickExpenseModal 
+        open={showExpenseModal} 
+        onOpenChange={setShowExpenseModal}
+        onExpenseAdded={handleExpenseAdded}
+      />
+    </>
   );
 };
 
