@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Download, Calendar, TrendingUp } from 'lucide-react';
+import { ExportOptionsModal } from './ExportOptionsModal';
 
 const expenseData = [
   { name: 'Utilities', value: 68500, percentage: 36.5, color: 'hsl(213, 94%, 68%)', key: 'utilities' },
@@ -67,6 +67,7 @@ export const ExpenseBreakdown: React.FC = () => {
   const [activeSegment, setActiveSegment] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'current' | 'trend'>('current');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   const handleSegmentClick = (data: any) => {
     setSelectedCategory(data.key);
@@ -74,13 +75,7 @@ export const ExpenseBreakdown: React.FC = () => {
   };
 
   const handleExportChart = () => {
-    // Create canvas element to capture chart
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    
-    // Note: This is a simplified export - in a real app you'd use a proper chart export library
-    console.log('Exporting chart as PNG...');
-    // Implementation would use html2canvas or similar library
+    setShowExportModal(true);
   };
 
   const CustomTooltip = ({ active, payload }: any) => {
@@ -125,130 +120,138 @@ export const ExpenseBreakdown: React.FC = () => {
   };
 
   return (
-    <Card className="dashboard-card">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-lg font-semibold">
-              {viewMode === 'current' ? 'January 2025' : 'Last 6 Months'} Expense Breakdown
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Total: <span className="font-mono font-semibold">₹1,87,500</span>
-              {viewMode === 'trend' && (
-                <Badge variant="secondary" className="ml-2">
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                  +8% vs last period
-                </Badge>
-              )}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button 
-              variant={viewMode === 'current' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('current')}
-            >
-              Current Month
-            </Button>
-            <Button 
-              variant={viewMode === 'trend' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('trend')}
-            >
-              <Calendar className="h-4 w-4 mr-1" />
-              6 Months
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleExportChart}
-            >
-              <Download className="h-4 w-4 mr-1" />
-              Export
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig} className="h-80 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={expenseData}
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                innerRadius={40}
-                paddingAngle={2}
-                dataKey="value"
-                onClick={handleSegmentClick}
-                className="cursor-pointer"
-                animationBegin={0}
-                animationDuration={800}
-              >
-                {expenseData.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={entry.color}
-                    stroke={activeSegment === entry.key ? 'hsl(var(--border))' : 'transparent'}
-                    strokeWidth={activeSegment === entry.key ? 2 : 0}
-                    className="transition-all duration-200 hover:opacity-80"
-                  />
-                ))}
-              </Pie>
-              <ChartTooltip content={<CustomTooltip />} />
-              <Legend content={<CustomLegend />} />
-            </PieChart>
-          </ResponsiveContainer>
-        </ChartContainer>
-        
-        {/* Detailed Breakdown */}
-        <div className="mt-6 space-y-3">
+    <>
+      <Card className="dashboard-card">
+        <CardHeader>
           <div className="flex items-center justify-between">
-            <h4 className="font-medium">Category Breakdown</h4>
-            {selectedCategory && (
+            <div>
+              <CardTitle className="text-lg font-semibold">
+                {viewMode === 'current' ? 'January 2025' : 'Last 6 Months'} Expense Breakdown
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Total: <span className="font-mono font-semibold">₹1,87,500</span>
+                {viewMode === 'trend' && (
+                  <Badge variant="secondary" className="ml-2">
+                    <TrendingUp className="h-3 w-3 mr-1" />
+                    +8% vs last period
+                  </Badge>
+                )}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
               <Button 
-                variant="ghost" 
+                variant={viewMode === 'current' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setSelectedCategory(null)}
+                onClick={() => setViewMode('current')}
               >
-                View All
+                Current Month
               </Button>
-            )}
-          </div>
-          
-          <div className="space-y-2">
-            {(selectedCategory 
-              ? subcategoryData[selectedCategory as keyof typeof subcategoryData] || []
-              : expenseData
-            ).map((item, index) => (
-              <div 
-                key={index} 
-                className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors cursor-pointer"
-                onClick={() => !selectedCategory && handleSegmentClick(item)}
+              <Button 
+                variant={viewMode === 'trend' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('trend')}
               >
-                <div className="flex items-center space-x-3">
-                  {!selectedCategory && (
-                    <div 
-                      className="w-4 h-4 rounded-full" 
-                      style={{ backgroundColor: (item as any).color }}
-                    />
-                  )}
-                  <span className="font-medium">{item.name}</span>
-                </div>
-                <div className="text-right">
-                  <span className="font-mono font-semibold">₹{item.value.toLocaleString()}</span>
-                  {!selectedCategory && (
-                    <span className="text-muted-foreground ml-2">
-                      ({(item as any).percentage}%)
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
+                <Calendar className="h-4 w-4 mr-1" />
+                6 Months
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleExportChart}
+              >
+                <Download className="h-4 w-4 mr-1" />
+                Export
+              </Button>
+            </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={chartConfig} className="h-80 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={expenseData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  innerRadius={40}
+                  paddingAngle={2}
+                  dataKey="value"
+                  onClick={handleSegmentClick}
+                  className="cursor-pointer"
+                  animationBegin={0}
+                  animationDuration={800}
+                >
+                  {expenseData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={entry.color}
+                      stroke={activeSegment === entry.key ? 'hsl(var(--border))' : 'transparent'}
+                      strokeWidth={activeSegment === entry.key ? 2 : 0}
+                      className="transition-all duration-200 hover:opacity-80"
+                    />
+                  ))}
+                </Pie>
+                <ChartTooltip content={<CustomTooltip />} />
+                <Legend content={<CustomLegend />} />
+              </PieChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+          
+          {/* Detailed Breakdown */}
+          <div className="mt-6 space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium">Category Breakdown</h4>
+              {selectedCategory && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setSelectedCategory(null)}
+                >
+                  View All
+                </Button>
+              )}
+            </div>
+            
+            <div className="space-y-2">
+              {(selectedCategory 
+                ? subcategoryData[selectedCategory as keyof typeof subcategoryData] || []
+                : expenseData
+              ).map((item, index) => (
+                <div 
+                  key={index} 
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors cursor-pointer"
+                  onClick={() => !selectedCategory && handleSegmentClick(item)}
+                >
+                  <div className="flex items-center space-x-3">
+                    {!selectedCategory && (
+                      <div 
+                        className="w-4 h-4 rounded-full" 
+                        style={{ backgroundColor: (item as any).color }}
+                      />
+                    )}
+                    <span className="font-medium">{item.name}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-mono font-semibold">₹{item.value.toLocaleString()}</span>
+                    {!selectedCategory && (
+                      <span className="text-muted-foreground ml-2">
+                        ({(item as any).percentage}%)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Export Options Modal */}
+      <ExportOptionsModal 
+        open={showExportModal}
+        onOpenChange={setShowExportModal}
+      />
+    </>
   );
 };
