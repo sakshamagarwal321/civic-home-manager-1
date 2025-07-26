@@ -306,7 +306,7 @@ export const RecentActivity: React.FC = () => {
           <Button 
             variant="outline" 
             className="w-full gap-2"
-            onClick={() => navigate('/activity-log')}
+            onClick={() => navigate('/activity')}
           >
             <ExternalLink className="h-4 w-4" />
             View All Activity

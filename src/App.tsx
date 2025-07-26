@@ -38,6 +38,7 @@ const App = () => (
               <Route path="/documents" element={<Documents />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/activity" element={<ActivityLog />} />
+              <Route path="/dashboard/activity" element={<ActivityLog />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <IntegrationManager />
