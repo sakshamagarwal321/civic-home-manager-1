@@ -49,6 +49,22 @@ export interface MaintenanceSettings {
   email_template?: string;
 }
 
+// Define the shape of data needed to create a payment
+export interface CreatePaymentData {
+  flat_number: string;
+  resident_id?: string;
+  payment_month: string;
+  base_amount: number;
+  payment_date: string;
+  payment_method: 'cash' | 'cheque' | 'upi_imps' | 'bank_transfer';
+  status?: 'pending' | 'paid' | 'overdue' | 'verified';
+  cheque_number?: string;
+  cheque_date?: string;
+  bank_name?: string;
+  transaction_reference?: string;
+  received_by?: string;
+}
+
 export const useMaintenancePayments = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -126,10 +142,10 @@ export const useMaintenancePayments = () => {
 
   // Create payment mutation
   const createPaymentMutation = useMutation({
-    mutationFn: async (paymentData: Partial<MaintenancePayment>) => {
+    mutationFn: async (paymentData: CreatePaymentData) => {
       const { data, error } = await supabase
         .from('maintenance_payments')
-        .insert([paymentData])
+        .insert(paymentData)
         .select()
         .single();
       
