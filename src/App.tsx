@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Finances from "./pages/Finances";
@@ -21,26 +22,28 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <LanguageProvider>
-        <TooltipProvider>
-          <Toaster />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/finances" element={<Finances />} />
-              <Route path="/members" element={<Members />} />
-              <Route path="/announcements" element={<Announcements />} />
-              <Route path="/documents" element={<Documents />} />
-              <Route path="/facilities" element={<Facilities />} />
-              <Route path="/maintenance-payments" element={<MaintenancePayments />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/activity-log" element={<ActivityLog />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </LanguageProvider>
+      <ThemeProvider>
+        <LanguageProvider>
+          <TooltipProvider>
+            <Toaster />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/finances" element={<Finances />} />
+                <Route path="/members" element={<Members />} />
+                <Route path="/announcements" element={<Announcements />} />
+                <Route path="/documents" element={<Documents />} />
+                <Route path="/facilities" element={<Facilities />} />
+                <Route path="/maintenance-payments" element={<MaintenancePayments />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/activity-log" element={<ActivityLog />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </LanguageProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
