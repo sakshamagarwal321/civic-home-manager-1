@@ -13,6 +13,8 @@ import Announcements from "./pages/Announcements";
 import Documents from "./pages/Documents";
 import Facilities from "./pages/Facilities";
 import Settings from "./pages/Settings";
+import Profile from "./pages/Profile";
+import UserSettings from "./pages/UserSettings";
 import ActivityLog from "./pages/ActivityLog";
 import MaintenancePayments from "./pages/MaintenancePayments";
 import NotFound from "./pages/NotFound";
@@ -37,6 +39,8 @@ function App() {
                 <Route path="/facilities" element={<Facilities />} />
                 <Route path="/maintenance-payments" element={<MaintenancePayments />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/user-settings" element={<UserSettings />} />
                 <Route path="/activity-log" element={<ActivityLog />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
