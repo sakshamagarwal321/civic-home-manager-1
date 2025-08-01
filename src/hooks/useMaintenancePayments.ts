@@ -161,6 +161,9 @@ export const useMaintenancePayments = () => {
         bank_name: paymentData.bank_name,
         transaction_reference: paymentData.transaction_reference,
         received_by: paymentData.received_by,
+        // These will be overridden by the database trigger but are required by TypeScript
+        receipt_number: '',
+        total_amount: paymentData.base_amount, // Will be recalculated by trigger
       };
 
       const { data, error } = await supabase
