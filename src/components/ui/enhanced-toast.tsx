@@ -37,16 +37,18 @@ export const useEnhancedToast = () => {
       }
     };
 
+    const icon = getIcon();
+    const titleContent = title && icon ? `${title}` : title;
+
     return toast({
-      title: (
+      title: titleContent,
+      description: (
         <div className="flex items-center gap-2">
-          {getIcon()}
-          {title}
+          {icon}
+          <span>{description}</span>
         </div>
       ),
-      description,
       duration,
-      action,
       className: cn(
         'animate-slide-in-right',
         variant === 'success' && 'border-green-200 bg-green-50',
