@@ -1,36 +1,33 @@
+
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, IndianRupee, Calendar, Settings, MessageSquare, FileText, Building } from 'lucide-react';
-import { cn } from '@/lib/utils';
-const navigation = [{
-  name: 'Dashboard',
-  href: '/',
-  icon: LayoutDashboard
-}, {
-  name: 'Financial Management',
-  href: '/finances',
-  icon: IndianRupee
-}, {
-  name: 'Members',
-  href: '/members',
-  icon: Users
-}, {
-  name: 'Facilities',
-  href: '/facilities',
-  icon: Building
-}, {
-  name: 'Announcements',
-  href: '/announcements',
-  icon: MessageSquare
-}, {
-  name: 'Documents',
-  href: '/documents',
-  icon: FileText
-}, {
-  name: 'Settings',
-  href: '/settings',
-  icon: Settings
-}];
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { 
+  BarChart3, 
+  Users, 
+  IndianRupee, 
+  CreditCard,
+  Megaphone, 
+  FileText, 
+  Building, 
+  Clock, 
+  Settings 
+} from "lucide-react";
+import { useLocation, Link } from 'react-router-dom';
+
+const navigation = [
+  { name: 'Dashboard', href: '/dashboard', icon: BarChart3, current: false },
+  { name: 'Members', href: '/members', icon: Users, current: false },
+  { name: 'Finances', href: '/finances', icon: IndianRupee, current: false },
+  { name: 'Maintenance Payments', href: '/maintenance-payments', icon: CreditCard, current: false },
+  { name: 'Announcements', href: '/announcements', icon: Megaphone, current: false },
+  { name: 'Documents', href: '/documents', icon: FileText, current: false },
+  { name: 'Facilities', href: '/facilities', icon: Building, current: false },
+  { name: 'Activity Log', href: '/activity-log', icon: Clock, current: false },
+  { name: 'Settings', href: '/settings', icon: Settings, current: false },
+];
+
 export const Sidebar: React.FC = () => {
   const location = useLocation();
   return <div className="w-64 bg-card border-r border-border h-screen sticky top-0">

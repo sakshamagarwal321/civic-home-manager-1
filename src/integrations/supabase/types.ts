@@ -14,6 +14,221 @@ export type Database = {
   }
   public: {
     Tables: {
+      flats: {
+        Row: {
+          block: string | null
+          created_at: string | null
+          flat_number: string
+          flat_type: string
+          id: string
+          is_active: boolean | null
+          resident_id: string | null
+          resident_name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          block?: string | null
+          created_at?: string | null
+          flat_number: string
+          flat_type: string
+          id?: string
+          is_active?: boolean | null
+          resident_id?: string | null
+          resident_name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          block?: string | null
+          created_at?: string | null
+          flat_number?: string
+          flat_type?: string
+          id?: string
+          is_active?: boolean | null
+          resident_id?: string | null
+          resident_name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flats_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_payments: {
+        Row: {
+          bank_name: string | null
+          base_amount: number
+          cheque_date: string | null
+          cheque_number: string | null
+          created_at: string | null
+          flat_number: string
+          id: string
+          payment_date: string
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          payment_month: string
+          penalty_amount: number | null
+          receipt_number: string
+          received_by: string | null
+          resident_id: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          total_amount: number
+          transaction_reference: string | null
+          updated_at: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          bank_name?: string | null
+          base_amount?: number
+          cheque_date?: string | null
+          cheque_number?: string | null
+          created_at?: string | null
+          flat_number: string
+          id?: string
+          payment_date: string
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          payment_month: string
+          penalty_amount?: number | null
+          receipt_number: string
+          received_by?: string | null
+          resident_id?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          total_amount: number
+          transaction_reference?: string | null
+          updated_at?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          bank_name?: string | null
+          base_amount?: number
+          cheque_date?: string | null
+          cheque_number?: string | null
+          created_at?: string | null
+          flat_number?: string
+          id?: string
+          payment_date?: string
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          payment_month?: string
+          penalty_amount?: number | null
+          receipt_number?: string
+          received_by?: string | null
+          resident_id?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          total_amount?: number
+          transaction_reference?: string | null
+          updated_at?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_payments_received_by_fkey"
+            columns: ["received_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_payments_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_payments_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_settings: {
+        Row: {
+          base_maintenance_fee: number | null
+          created_at: string | null
+          current_receipt_sequence: number | null
+          email_template: string | null
+          id: string
+          late_payment_penalty: number | null
+          penalty_due_date: number | null
+          receipt_prefix: string | null
+          society_address: string | null
+          society_name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          base_maintenance_fee?: number | null
+          created_at?: string | null
+          current_receipt_sequence?: number | null
+          email_template?: string | null
+          id?: string
+          late_payment_penalty?: number | null
+          penalty_due_date?: number | null
+          receipt_prefix?: string | null
+          society_address?: string | null
+          society_name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          base_maintenance_fee?: number | null
+          created_at?: string | null
+          current_receipt_sequence?: number | null
+          email_template?: string | null
+          id?: string
+          late_payment_penalty?: number | null
+          penalty_due_date?: number | null
+          receipt_prefix?: string | null
+          society_address?: string | null
+          society_name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      payment_reminders: {
+        Row: {
+          flat_number: string
+          id: string
+          payment_month: string
+          reminder_type: string
+          sent_at: string | null
+          sent_by: string | null
+          status: string | null
+        }
+        Insert: {
+          flat_number: string
+          id?: string
+          payment_month: string
+          reminder_type: string
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string | null
+        }
+        Update: {
+          flat_number?: string
+          id?: string
+          payment_month?: string
+          reminder_type?: string
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_reminders_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           account_status: Database["public"]["Enums"]["account_status"]
@@ -163,6 +378,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_penalty: {
+        Args: { payment_date: string; payment_month: string }
+        Returns: number
+      }
+      generate_receipt_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_role: {
         Args: { user_id: string }
         Returns: Database["public"]["Enums"]["user_role"]
@@ -180,6 +403,8 @@ export type Database = {
     }
     Enums: {
       account_status: "active" | "inactive" | "suspended" | "pending_approval"
+      payment_method: "cash" | "cheque" | "upi_imps" | "bank_transfer"
+      payment_status: "pending" | "paid" | "overdue" | "verified"
       user_role:
         | "super_admin"
         | "committee_member"
@@ -315,6 +540,8 @@ export const Constants = {
   public: {
     Enums: {
       account_status: ["active", "inactive", "suspended", "pending_approval"],
+      payment_method: ["cash", "cheque", "upi_imps", "bank_transfer"],
+      payment_status: ["pending", "paid", "overdue", "verified"],
       user_role: [
         "super_admin",
         "committee_member",
