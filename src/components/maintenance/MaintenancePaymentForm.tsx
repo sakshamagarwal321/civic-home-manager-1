@@ -10,8 +10,11 @@ import { AlertCircle, Download, Calendar, CreditCard, Banknote, Smartphone } fro
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { useMaintenancePayments } from '@/hooks/useMaintenancePayments';
+import { useFlatAssignments } from '@/hooks/useFlatAssignments';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { format } from 'date-fns';
+import { NoFlatsAssigned } from './NoFlatsAssigned';
+import { UserFlatCard } from './UserFlatCard';
 
 interface PaymentFormData {
   flatNumber: string;
@@ -29,13 +32,14 @@ interface PaymentFormData {
 
 export const MaintenancePaymentForm: React.FC = () => {
   const { 
-    flats, 
     settings, 
     checkExistingPayment, 
     calculatePenalty, 
     createPayment, 
     isCreatingPayment 
   } = useMaintenancePayments();
+
+  const { userFlats, flatsLoading, error: flatsError } = useFlatAssignments();
 
   const [formData, setFormData] = useState<PaymentFormData>({
     flatNumber: '',
@@ -50,6 +54,21 @@ export const MaintenancePaymentForm: React.FC = () => {
   const [existingPayment, setExistingPayment] = useState<any>(null);
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [selectedFlat, setSelectedFlat] = useState<any>(null);
+
+  // Auto-select flat if user has only one
+  useEffect(() => {
+    if (userFlats.length === 1 && !formData.flatNumber) {
+      setFormData(prev => ({ ...prev, flatNumber: userFlats[0].flat_number }));
+    }
+  }, [userFlats, formData.flatNumber]);
+
+  // Set selected flat details
+  useEffect(() => {
+    if (formData.flatNumber) {
+      const flat = userFlats.find(f => f.flat_number === formData.flatNumber);
+      setSelectedFlat(flat);
+    }
+  }, [formData.flatNumber, userFlats]);
 
   // Check for existing payment when flat or month changes
   useEffect(() => {
@@ -87,14 +106,6 @@ export const MaintenancePaymentForm: React.FC = () => {
     }
   }, [formData.paymentDate, formData.paymentMonth, settings, calculatePenalty]);
 
-  // Set selected flat details
-  useEffect(() => {
-    if (formData.flatNumber) {
-      const flat = flats.find(f => f.flat_number === formData.flatNumber);
-      setSelectedFlat(flat);
-    }
-  }, [formData.flatNumber, flats]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -126,7 +137,7 @@ export const MaintenancePaymentForm: React.FC = () => {
       
       // Reset form
       setFormData({
-        flatNumber: '',
+        flatNumber: userFlats.length === 1 ? userFlats[0].flat_number : '',
         paymentMonth: format(new Date(), 'yyyy-MM-01'),
         baseAmount: 2500,
         penaltyAmount: 0,
@@ -153,6 +164,45 @@ export const MaintenancePaymentForm: React.FC = () => {
     return 0;
   };
 
+  // Loading state
+  if (flatsLoading) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <Card>
+          <CardContent className="flex items-center justify-center py-12">
+            <div className="flex items-center gap-2">
+              <LoadingSpinner size="sm" />
+              <span>Loading your assigned flats...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Error state
+  if (flatsError) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Unable to load your flat information. Please try again later or contact support.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  // No flats assigned
+  if (userFlats.length === 0) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <NoFlatsAssigned />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <Card>
@@ -169,18 +219,18 @@ export const MaintenancePaymentForm: React.FC = () => {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="flatNumber">Flat Number</Label>
+                    <Label htmlFor="flatNumber">Select Your Flat</Label>
                     <Select 
                       value={formData.flatNumber} 
                       onValueChange={(value) => setFormData(prev => ({ ...prev, flatNumber: value }))}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select flat number" />
+                        <SelectValue placeholder={userFlats.length === 1 ? "Auto-selected" : "Select your flat"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {flats.map((flat) => (
-                          <SelectItem key={flat.id} value={flat.flat_number}>
-                            {flat.flat_number} - {flat.flat_type}
+                        {userFlats.map((flat) => (
+                          <SelectItem key={flat.flat_id} value={flat.flat_number}>
+                            {flat.flat_number} ({flat.flat_type} - {flat.assignment_type === 'owner' ? 'Owner' : 'Tenant'})
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -201,20 +251,7 @@ export const MaintenancePaymentForm: React.FC = () => {
                 </div>
 
                 {selectedFlat && (
-                  <Card className="bg-muted">
-                    <CardContent className="pt-4">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="font-medium">Resident Name:</span>
-                          <p>{selectedFlat.resident_name || 'Not assigned'}</p>
-                        </div>
-                        <div>
-                          <span className="font-medium">Flat Type:</span>
-                          <p>{selectedFlat.flat_type}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <UserFlatCard flat={selectedFlat} />
                 )}
               </CardContent>
             </Card>
