@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,10 +10,13 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { useMaintenancePayments } from '@/hooks/useMaintenancePayments';
 import { useFlatAssignments } from '@/hooks/useFlatAssignments';
+import { useTestAuth } from '@/hooks/useTestAuth';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { format } from 'date-fns';
 import { NoFlatsAssigned } from './NoFlatsAssigned';
 import { UserFlatCard } from './UserFlatCard';
+import { TestUserSwitcher } from './TestUserSwitcher';
+import { ImprovedErrorDisplay } from './ImprovedErrorDisplay';
 
 interface PaymentFormData {
   flatNumber: string;
@@ -40,6 +42,7 @@ export const MaintenancePaymentForm: React.FC = () => {
   } = useMaintenancePayments();
 
   const { userFlats, flatsLoading, error: flatsError } = useFlatAssignments();
+  const { user: testUser, switchUser } = useTestAuth();
 
   const [formData, setFormData] = useState<PaymentFormData>({
     flatNumber: '',
@@ -54,6 +57,7 @@ export const MaintenancePaymentForm: React.FC = () => {
   const [existingPayment, setExistingPayment] = useState<any>(null);
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [selectedFlat, setSelectedFlat] = useState<any>(null);
+  const [retryAttempts, setRetryAttempts] = useState(0);
 
   // Auto-select flat if user has only one
   useEffect(() => {
@@ -105,6 +109,11 @@ export const MaintenancePaymentForm: React.FC = () => {
       }));
     }
   }, [formData.paymentDate, formData.paymentMonth, settings, calculatePenalty]);
+
+  const handleRetry = () => {
+    setRetryAttempts(prev => prev + 1);
+    window.location.reload();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,6 +177,7 @@ export const MaintenancePaymentForm: React.FC = () => {
   if (flatsLoading) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
+        <TestUserSwitcher currentUser={testUser} onUserSwitch={switchUser} />
         <Card>
           <CardContent className="flex items-center justify-center py-12">
             <div className="flex items-center gap-2">
@@ -180,16 +190,16 @@ export const MaintenancePaymentForm: React.FC = () => {
     );
   }
 
-  // Error state
+  // Error state with improved error handling
   if (flatsError) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Unable to load your flat information. Please try again later or contact support.
-          </AlertDescription>
-        </Alert>
+        <TestUserSwitcher currentUser={testUser} onUserSwitch={switchUser} />
+        <ImprovedErrorDisplay 
+          error={flatsError}
+          onRetry={handleRetry}
+          isRetrying={false}
+        />
       </div>
     );
   }
@@ -198,6 +208,7 @@ export const MaintenancePaymentForm: React.FC = () => {
   if (userFlats.length === 0) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
+        <TestUserSwitcher currentUser={testUser} onUserSwitch={switchUser} />
         <NoFlatsAssigned />
       </div>
     );
@@ -205,6 +216,8 @@ export const MaintenancePaymentForm: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      <TestUserSwitcher currentUser={testUser} onUserSwitch={switchUser} />
+      
       <Card>
         <CardHeader>
           <CardTitle>Maintenance Payment</CardTitle>
@@ -286,7 +299,7 @@ export const MaintenancePaymentForm: React.FC = () => {
 
             {!existingPayment && formData.flatNumber && (
               <>
-                {/* Section 2: Payment Details & Penalty Calculation */}
+                {/* Payment Details Section */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg">Payment Details</CardTitle>
@@ -349,7 +362,7 @@ export const MaintenancePaymentForm: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                {/* Section 3: Payment Method Selection */}
+                {/* Payment Method Section */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg">Payment Method</CardTitle>

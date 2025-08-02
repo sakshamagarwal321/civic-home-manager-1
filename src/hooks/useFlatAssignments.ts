@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useTestAuth } from './useTestAuth';
 
 export interface UserFlat {
   flat_id: string;
@@ -19,21 +20,45 @@ export interface UserFlat {
 export const useFlatAssignments = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user: testUser } = useTestAuth();
 
   // Get current user's assigned flats using the existing flats table
   const { data: userFlats = [], isLoading: flatsLoading, error } = useQuery({
-    queryKey: ['user-flats'],
+    queryKey: ['user-flats', testUser?.id],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      // Try to get authenticated user first, fall back to test user
+      let userId: string | null = null;
+      
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        userId = user?.id || null;
+      } catch (authError) {
+        console.log('Auth error, using test user:', authError);
+      }
+
+      // Use test user if no authenticated user
+      if (!userId && testUser) {
+        userId = testUser.id;
+      }
+
+      if (!userId) {
+        throw new Error('No user authenticated - please login or use test mode');
+      }
 
       const { data, error } = await supabase
         .from('flats')
         .select('*')
-        .eq('resident_id', user.id)
+        .eq('resident_id', userId)
         .eq('is_active', true);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error:', error);
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error('No flats assigned to your account');
+      }
 
       // Transform the data to match the UserFlat interface
       return (data || []).map((flat: any) => ({
@@ -50,6 +75,7 @@ export const useFlatAssignments = () => {
       })) as UserFlat[];
     },
     retry: 1,
+    enabled: !!testUser, // Only run query when we have a user
   });
 
   // Get all available flats (for admin use)
