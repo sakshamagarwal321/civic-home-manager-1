@@ -20,7 +20,7 @@ export const useFlatAssignments = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get current user's assigned flats using direct table joins
+  // Get current user's assigned flats using the existing flats table
   const { data: userFlats = [], isLoading: flatsLoading, error } = useQuery({
     queryKey: ['user-flats'],
     queryFn: async () => {
@@ -28,39 +28,25 @@ export const useFlatAssignments = () => {
       if (!user) throw new Error('User not authenticated');
 
       const { data, error } = await supabase
-        .from('flat_assignments')
-        .select(`
-          id,
-          assignment_type,
-          start_date,
-          end_date,
-          is_active,
-          flats (
-            id,
-            flat_number,
-            block,
-            flat_type,
-            carpet_area,
-            floor_number
-          )
-        `)
-        .eq('user_id', user.id)
+        .from('flats')
+        .select('*')
+        .eq('resident_id', user.id)
         .eq('is_active', true);
 
       if (error) throw error;
 
       // Transform the data to match the UserFlat interface
-      return (data || []).map((assignment: any) => ({
-        flat_id: assignment.flats.id,
-        flat_number: assignment.flats.flat_number,
-        block: assignment.flats.block || '',
-        flat_type: assignment.flats.flat_type,
-        carpet_area: assignment.flats.carpet_area || 0,
-        floor_number: assignment.flats.floor_number || 0,
-        assignment_type: assignment.assignment_type,
-        start_date: assignment.start_date,
-        end_date: assignment.end_date,
-        is_active: assignment.is_active
+      return (data || []).map((flat: any) => ({
+        flat_id: flat.id,
+        flat_number: flat.flat_number,
+        block: flat.block || '',
+        flat_type: flat.flat_type,
+        carpet_area: flat.carpet_area || 0,
+        floor_number: flat.floor_number || 0,
+        assignment_type: (flat.ownership_type || 'owner') as 'owner' | 'tenant',
+        start_date: flat.possession_date || flat.created_at,
+        end_date: undefined,
+        is_active: flat.is_active
       })) as UserFlat[];
     },
     retry: 1,
