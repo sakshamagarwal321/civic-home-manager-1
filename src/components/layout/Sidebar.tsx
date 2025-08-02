@@ -1,73 +1,150 @@
-
-import React from 'react';
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import React, { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { 
-  BarChart3, 
+  LayoutDashboard, 
   Users, 
-  IndianRupee, 
-  CreditCard,
+  CreditCard, 
+  Calendar, 
   Megaphone, 
   FileText, 
-  Building, 
-  Clock, 
-  Settings 
-} from "lucide-react";
-import { useLocation, Link } from 'react-router-dom';
+  Settings, 
+  Home,
+  Building2,
+  Activity,
+  ChevronDown,
+  ChevronRight
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: BarChart3, current: false },
-  { name: 'Members', href: '/members', icon: Users, current: false },
-  { name: 'Finances', href: '/finances', icon: IndianRupee, current: false },
-  { name: 'Maintenance Payments', href: '/maintenance-payments', icon: CreditCard, current: false },
-  { name: 'Announcements', href: '/announcements', icon: Megaphone, current: false },
-  { name: 'Documents', href: '/documents', icon: FileText, current: false },
-  { name: 'Facilities', href: '/facilities', icon: Building, current: false },
-  { name: 'Activity Log', href: '/activity-log', icon: Clock, current: false },
-  { name: 'Settings', href: '/settings', icon: Settings, current: false },
+interface SidebarProps {
+  className?: string;
+}
+
+const sidebarItems = [
+  {
+    title: 'Dashboard',
+    icon: LayoutDashboard,
+    href: '/dashboard',
+  },
+  {
+    title: 'Member Management',
+    icon: Users,
+    href: '/members',
+  },
+  {
+    title: 'Flat Management',
+    icon: Building2,
+    href: '/flat-management',
+  },
+  {
+    title: 'Finances',
+    icon: CreditCard,
+    href: '/finances',
+  },
+  {
+    title: 'Maintenance Payments',
+    icon: Calendar,
+    href: '/maintenance-payments',
+  },
+  {
+    title: 'Facilities',
+    icon: Home,
+    href: '/facilities',
+  },
+  {
+    title: 'Announcements',
+    icon: Megaphone,
+    href: '/announcements',
+  },
+  {
+    title: 'Documents',
+    icon: FileText,
+    href: '/documents',
+  },
+  {
+    title: 'Settings',
+    icon: Settings,
+    href: '/settings',
+  },
+  {
+    title: 'Activity Log',
+    icon: Activity,
+    href: '/activity-log',
+  },
 ];
 
-export const Sidebar: React.FC = () => {
+export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   const location = useLocation();
-  
+  const navigate = useNavigate();
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  const isActive = (href: string) => {
+    return location.pathname === href;
+  };
+
+  const toggleExpand = (title: string) => {
+    setExpanded(expanded === title ? null : title);
+  };
+
   return (
-    <div className="w-64 bg-sidebar border-r border-sidebar-border h-screen sticky top-0">
-      <div className="p-6">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-sidebar-primary rounded-lg flex items-center justify-center">
-            <Building className="w-5 h-5 text-sidebar-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold text-sidebar-foreground">Eco Towers</h1>
-            <p className="text-xs text-sidebar-foreground/70">Management System</p>
-          </div>
-        </div>
-      </div>
-      
-      <nav className="px-4 pb-4">
-        <ul className="space-y-1">
-          {navigation.map(item => {
-            const isActive = location.pathname === item.href;
-            return (
-              <li key={item.name}>
-                <Link 
-                  to={item.href} 
-                  className={cn(
-                    "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200",
-                    isActive 
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm" 
-                      : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                  )}
+    <div className={cn("flex flex-col h-full bg-secondary border-r", className)}>
+      <ScrollArea className="flex-1 space-y-4 p-4">
+        <div className="space-y-1">
+          {sidebarItems.map((item) => (
+            item.children ? (
+              <div key={item.title} className="space-y-1">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start px-2"
+                  onClick={() => toggleExpand(item.title)}
                 >
-                  <item.icon className="mr-3 h-5 w-5" />
-                  {item.name}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
+                  <div className="flex items-center space-x-2">
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.title}</span>
+                  </div>
+                  {expanded === item.title ? (
+                    <ChevronDown className="h-4 w-4 ml-auto" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 ml-auto" />
+                  )}
+                </Button>
+                {expanded === item.title && (
+                  <div className="pl-4 space-y-1">
+                    {item.children.map((child) => (
+                      <Button
+                        key={child.title}
+                        variant="ghost"
+                        className={cn(
+                          "w-full justify-start pl-8",
+                          isActive(child.href) ? "font-medium" : "text-muted-foreground"
+                        )}
+                        onClick={() => navigate(child.href)}
+                      >
+                        {child.title}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Button
+                key={item.title}
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start",
+                  isActive(item.href) ? "font-medium" : "text-muted-foreground"
+                )}
+                onClick={() => navigate(item.href)}
+              >
+                <item.icon className="h-4 w-4 mr-2" />
+                <span>{item.title}</span>
+              </Button>
+            )
+          ))}
+        </div>
+      </ScrollArea>
     </div>
   );
 };
