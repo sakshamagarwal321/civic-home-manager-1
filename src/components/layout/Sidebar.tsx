@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -17,10 +18,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
-interface SidebarProps {
-  className?: string;
-}
 
 const sidebarItems = [
   {
@@ -45,12 +42,12 @@ const sidebarItems = [
   },
   {
     title: 'Maintenance Payments',
-    icon: Calendar,
+    icon: CreditCard,
     href: '/maintenance-payments',
   },
   {
     title: 'Facilities',
-    icon: Home,
+    icon: Calendar,
     href: '/facilities',
   },
   {
@@ -64,86 +61,55 @@ const sidebarItems = [
     href: '/documents',
   },
   {
-    title: 'Settings',
-    icon: Settings,
-    href: '/settings',
-  },
-  {
     title: 'Activity Log',
     icon: Activity,
     href: '/activity-log',
   },
+  {
+    title: 'Settings',
+    icon: Settings,
+    href: '/settings',
+  },
 ];
 
-export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
+export const Sidebar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [expanded, setExpanded] = useState<string | null>(null);
-
-  const isActive = (href: string) => {
-    return location.pathname === href;
-  };
-
-  const toggleExpand = (title: string) => {
-    setExpanded(expanded === title ? null : title);
-  };
 
   return (
-    <div className={cn("flex flex-col h-full bg-secondary border-r", className)}>
-      <ScrollArea className="flex-1 space-y-4 p-4">
-        <div className="space-y-1">
-          {sidebarItems.map((item) => (
-            item.children ? (
-              <div key={item.title} className="space-y-1">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start px-2"
-                  onClick={() => toggleExpand(item.title)}
-                >
-                  <div className="flex items-center space-x-2">
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.title}</span>
-                  </div>
-                  {expanded === item.title ? (
-                    <ChevronDown className="h-4 w-4 ml-auto" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 ml-auto" />
-                  )}
-                </Button>
-                {expanded === item.title && (
-                  <div className="pl-4 space-y-1">
-                    {item.children.map((child) => (
-                      <Button
-                        key={child.title}
-                        variant="ghost"
-                        className={cn(
-                          "w-full justify-start pl-8",
-                          isActive(child.href) ? "font-medium" : "text-muted-foreground"
-                        )}
-                        onClick={() => navigate(child.href)}
-                      >
-                        {child.title}
-                      </Button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
+    <div className="w-64 bg-white border-r flex flex-col h-full">
+      <div className="p-6 border-b">
+        <div className="flex items-center gap-3">
+          <Home className="h-8 w-8 text-primary" />
+          <div>
+            <h1 className="text-lg font-semibold">Greenfield</h1>
+            <p className="text-sm text-muted-foreground">Residency Society</p>
+          </div>
+        </div>
+      </div>
+
+      <ScrollArea className="flex-1 p-4">
+        <nav className="space-y-2">
+          {sidebarItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.href;
+
+            return (
               <Button
-                key={item.title}
-                variant="ghost"
+                key={item.href}
+                variant={isActive ? "secondary" : "ghost"}
                 className={cn(
-                  "w-full justify-start",
-                  isActive(item.href) ? "font-medium" : "text-muted-foreground"
+                  "w-full justify-start gap-3",
+                  isActive && "bg-secondary"
                 )}
                 onClick={() => navigate(item.href)}
               >
-                <item.icon className="h-4 w-4 mr-2" />
-                <span>{item.title}</span>
+                <Icon className="h-4 w-4" />
+                {item.title}
               </Button>
-            )
-          ))}
-        </div>
+            );
+          })}
+        </nav>
       </ScrollArea>
     </div>
   );

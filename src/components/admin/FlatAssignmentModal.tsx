@@ -70,9 +70,9 @@ export const FlatAssignmentModal: React.FC<FlatAssignmentModalProps> = ({ open, 
                 <SelectValue placeholder="Choose a flat" />
               </SelectTrigger>
               <SelectContent>
-                {vacantFlats.map((flat) => (
+                {vacantFlats.map((flat: any) => (
                   <SelectItem key={flat.id} value={flat.id}>
-                    {flat.flat_number} - {flat.flat_type} ({flat.block} Block)
+                    {flat.flat_number} - {flat.flat_type} ({flat.block || 'A'} Block)
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -86,7 +86,7 @@ export const FlatAssignmentModal: React.FC<FlatAssignmentModalProps> = ({ open, 
                 <SelectValue placeholder="Choose a user" />
               </SelectTrigger>
               <SelectContent>
-                {users.map((user) => (
+                {users.map((user: any) => (
                   <SelectItem key={user.id} value={user.id}>
                     {user.name} {user.phone && `(${user.phone})`}
                   </SelectItem>
