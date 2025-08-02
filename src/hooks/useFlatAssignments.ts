@@ -9,8 +9,8 @@ export interface FlatAssignment {
   flat_number: string;
   block: string;
   flat_type: string;
-  carpet_area: number | null;
-  floor_number: number | null;
+  carpet_area: number;
+  floor_number: number;
   status: 'occupied' | 'vacant' | 'pending';
   assignment_type: 'owner' | 'tenant' | null;
   user_id: string | null;
@@ -34,35 +34,13 @@ export const useFlatAssignments = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get all flat assignments using a simpler approach
+  // Get all flat assignments
   const { data: flatAssignments = [], isLoading: assignmentsLoading } = useQuery({
     queryKey: ['flat_assignments'],
     queryFn: async () => {
-      // Get all flats first
-      const { data: flats, error: flatsError } = await supabase
-        .from('flats')
-        .select('*')
-        .order('flat_number');
-      
-      if (flatsError) throw flatsError;
-
-      // Transform to FlatAssignment format
-      return (flats || []).map(flat => ({
-        flat_id: flat.id,
-        flat_number: flat.flat_number,
-        block: flat.block || 'A',
-        flat_type: flat.flat_type,
-        carpet_area: null,
-        floor_number: null,
-        status: (flat.resident_id ? 'occupied' : 'vacant') as 'occupied' | 'vacant' | 'pending',
-        assignment_type: null,
-        user_id: flat.resident_id,
-        user_name: flat.resident_name,
-        user_phone: null,
-        start_date: null,
-        end_date: null,
-        is_active: true,
-      })) as FlatAssignment[];
+      const { data, error } = await supabase.rpc('get_flat_assignments');
+      if (error) throw error;
+      return data as FlatAssignment[];
     }
   });
 
@@ -76,7 +54,7 @@ export const useFlatAssignments = () => {
         .order('first_name');
       
       if (error) throw error;
-      return (data || []).map(user => ({
+      return data.map(user => ({
         id: user.id,
         name: `${user.first_name} ${user.last_name}`,
         phone: user.phone
@@ -90,41 +68,51 @@ export const useFlatAssignments = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('flats')
-        .select('id, flat_number, block, flat_type')
-        .is('resident_id', null)
+        .select('id, flat_number, block, flat_type, carpet_area, floor_number')
+        .eq('status', 'vacant')
         .order('flat_number');
       
       if (error) throw error;
-      return data || [];
+      return data;
     }
   });
 
   // Create assignment mutation
   const createAssignmentMutation = useMutation({
     mutationFn: async (assignmentData: CreateAssignmentData) => {
-      // Get user name first
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('first_name, last_name')
-        .eq('id', assignmentData.user_id)
+      // First, create the assignment record
+      const { data: assignment, error: assignmentError } = await supabase
+        .from('flat_assignments')
+        .insert({
+          flat_id: assignmentData.flat_id,
+          user_id: assignmentData.user_id,
+          assignment_type: assignmentData.assignment_type,
+          start_date: assignmentData.start_date,
+          end_date: assignmentData.end_date,
+          notes: assignmentData.notes,
+          is_active: true
+        })
+        .select()
         .single();
 
-      if (userError) throw userError;
+      if (assignmentError) throw assignmentError;
 
-      const userName = `${userData.first_name} ${userData.last_name}`;
-
-      // Update the flat with resident information
+      // Update the flat status
       const { error: flatError } = await supabase
         .from('flats')
         .update({
           resident_id: assignmentData.user_id,
-          resident_name: userName
+          status: 'occupied',
+          ownership_type: assignmentData.assignment_type,
+          possession_date: assignmentData.start_date,
+          lease_start_date: assignmentData.assignment_type === 'tenant' ? assignmentData.start_date : null,
+          lease_end_date: assignmentData.end_date || null
         })
         .eq('id', assignmentData.flat_id);
 
       if (flatError) throw flatError;
 
-      return { success: true };
+      return assignment;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['flat_assignments'] });
@@ -147,16 +135,30 @@ export const useFlatAssignments = () => {
   // Remove assignment mutation
   const removeAssignmentMutation = useMutation({
     mutationFn: async (flatId: string) => {
-      // Update flat to remove resident
-      const { error } = await supabase
+      // Mark assignment as inactive
+      const { error: assignmentError } = await supabase
+        .from('flat_assignments')
+        .update({ is_active: false })
+        .eq('flat_id', flatId)
+        .eq('is_active', true);
+
+      if (assignmentError) throw assignmentError;
+
+      // Update flat status to vacant
+      const { error: flatError } = await supabase
         .from('flats')
         .update({
           resident_id: null,
-          resident_name: null
+          resident_name: null,
+          status: 'vacant',
+          ownership_type: null,
+          possession_date: null,
+          lease_start_date: null,
+          lease_end_date: null
         })
         .eq('id', flatId);
 
-      if (error) throw error;
+      if (flatError) throw flatError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['flat_assignments'] });
