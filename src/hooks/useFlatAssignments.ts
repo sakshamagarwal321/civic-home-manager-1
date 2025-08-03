@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useTestAuth } from './useTestAuth';
+import { useEffect } from 'react';
 
 export interface UserFlat {
   flat_id: string;
@@ -22,34 +23,30 @@ export const useFlatAssignments = () => {
   const queryClient = useQueryClient();
   const { user: testUser } = useTestAuth();
 
+  // Invalidate queries when test user changes
+  useEffect(() => {
+    if (testUser?.id) {
+      queryClient.invalidateQueries({ queryKey: ['user-flats'] });
+    }
+  }, [testUser?.id, queryClient]);
+
   // Get current user's assigned flats using the existing flats table
   const { data: userFlats = [], isLoading: flatsLoading, error } = useQuery({
     queryKey: ['user-flats', testUser?.id],
     queryFn: async () => {
-      // Try to get authenticated user first, fall back to test user
-      let userId: string | null = null;
+      console.log('Fetching flats for user:', testUser);
       
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        userId = user?.id || null;
-      } catch (authError) {
-        console.log('Auth error, using test user:', authError);
-      }
-
-      // Use test user if no authenticated user
-      if (!userId && testUser) {
-        userId = testUser.id;
-      }
-
-      if (!userId) {
-        throw new Error('No user authenticated - please login or use test mode');
+      if (!testUser?.id) {
+        throw new Error('No user authenticated - please select a test user');
       }
 
       const { data, error } = await supabase
         .from('flats')
         .select('*')
-        .eq('resident_id', userId)
+        .eq('resident_id', testUser.id)
         .eq('is_active', true);
+
+      console.log('Supabase query result:', { data, error });
 
       if (error) {
         console.error('Database error:', error);
@@ -57,11 +54,12 @@ export const useFlatAssignments = () => {
       }
 
       if (!data || data.length === 0) {
+        console.log('No flats found for user:', testUser.id);
         throw new Error('No flats assigned to your account');
       }
 
       // Transform the data to match the UserFlat interface
-      return (data || []).map((flat: any) => ({
+      const transformedFlats = data.map((flat: any) => ({
         flat_id: flat.id,
         flat_number: flat.flat_number,
         block: flat.block || '',
@@ -73,9 +71,12 @@ export const useFlatAssignments = () => {
         end_date: undefined,
         is_active: flat.is_active
       })) as UserFlat[];
+
+      console.log('Transformed flats:', transformedFlats);
+      return transformedFlats;
     },
     retry: 1,
-    enabled: !!testUser, // Only run query when we have a user
+    enabled: !!testUser?.id, // Only run query when we have a user
   });
 
   // Get all available flats (for admin use)
