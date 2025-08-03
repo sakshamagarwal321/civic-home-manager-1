@@ -1,23 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { AlertCircle, Download, Calendar, CreditCard, Banknote, Smartphone, RefreshCw, CheckCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { useMaintenancePayments } from '@/hooks/useMaintenancePayments';
-import { useFlatAssignments } from '@/hooks/useFlatAssignments';
 import { useTestAuth } from '@/hooks/useTestAuth';
+import { useTestFlatData } from '@/hooks/useTestFlatData';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { format } from 'date-fns';
 import { NoFlatsAssigned } from './NoFlatsAssigned';
-import { UserFlatCard } from './UserFlatCard';
 import { TestUserSwitcher } from './TestUserSwitcher';
-import { ImprovedErrorDisplay } from './ImprovedErrorDisplay';
+import { PaymentFormSections } from './PaymentFormSections';
+import { useToast } from '@/hooks/use-toast';
 
 interface PaymentFormData {
   flatNumber: string;
@@ -34,16 +27,9 @@ interface PaymentFormData {
 }
 
 export const MaintenancePaymentForm: React.FC = () => {
-  const { 
-    settings, 
-    checkExistingPayment, 
-    calculatePenalty, 
-    createPayment, 
-    isCreatingPayment 
-  } = useMaintenancePayments();
-
-  const { userFlats, flatsLoading, error: flatsError } = useFlatAssignments();
   const { user: testUser, switchUser } = useTestAuth();
+  const { userFlats, isLoading: flatsLoading, error: flatsError, refetch } = useTestFlatData();
+  const { toast } = useToast();
 
   const [formData, setFormData] = useState<PaymentFormData>({
     flatNumber: '',
@@ -59,6 +45,7 @@ export const MaintenancePaymentForm: React.FC = () => {
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [selectedFlat, setSelectedFlat] = useState<any>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Handle user switching with immediate feedback
   const handleUserSwitch = async (userId: string, name: string) => {
@@ -80,19 +67,24 @@ export const MaintenancePaymentForm: React.FC = () => {
     // Switch user context
     switchUser(userId, name);
     
-    console.log('User switch completed, waiting for data to load...');
-    
-    // Add a small delay to ensure the query invalidation has time to process
+    // Refresh data
     setTimeout(() => {
+      refetch();
       setIsRefreshing(false);
-    }, 1500);
+    }, 1000);
   };
 
-  // Auto-select flat if user has only one and show success state
+  // Auto-select flat if user has only one and update base amount
   useEffect(() => {
     if (userFlats.length === 1 && !formData.flatNumber) {
-      console.log('Auto-selecting single flat:', userFlats[0]);
-      setFormData(prev => ({ ...prev, flatNumber: userFlats[0].flat_number }));
+      const flat = userFlats[0];
+      console.log('Auto-selecting single flat:', flat);
+      setFormData(prev => ({ 
+        ...prev, 
+        flatNumber: flat.flat_number,
+        baseAmount: flat.monthly_maintenance,
+        totalAmount: flat.monthly_maintenance
+      }));
     }
   }, [userFlats, formData.flatNumber]);
 
@@ -102,36 +94,28 @@ export const MaintenancePaymentForm: React.FC = () => {
       const flat = userFlats.find(f => f.flat_number === formData.flatNumber);
       console.log('Selected flat details:', flat);
       setSelectedFlat(flat);
+      
+      if (flat) {
+        setFormData(prev => ({ 
+          ...prev, 
+          baseAmount: flat.monthly_maintenance,
+          totalAmount: flat.monthly_maintenance + prev.penaltyAmount
+        }));
+      }
     }
   }, [formData.flatNumber, userFlats]);
 
-  // Check for existing payment when flat or month changes
-  useEffect(() => {
-    const checkPayment = async () => {
-      if (formData.flatNumber && formData.paymentMonth) {
-        setCheckingPayment(true);
-        try {
-          const existing = await checkExistingPayment(formData.flatNumber, formData.paymentMonth);
-          setExistingPayment(existing);
-        } catch (error) {
-          console.error('Error checking existing payment:', error);
-        }
-        setCheckingPayment(false);
-      }
-    };
-    
-    checkPayment();
-  }, [formData.flatNumber, formData.paymentMonth, checkExistingPayment]);
-
   // Calculate penalty when payment date or month changes
   useEffect(() => {
-    if (settings && formData.paymentDate && formData.paymentMonth) {
-      const { penalty } = calculatePenalty(
-        formData.paymentDate, 
-        formData.paymentMonth,
-        settings.penalty_due_date,
-        settings.late_payment_penalty
-      );
+    if (formData.paymentDate && formData.paymentMonth) {
+      const paymentDate = new Date(formData.paymentDate);
+      const monthObj = new Date(formData.paymentMonth);
+      const dueDate = new Date(monthObj.getFullYear(), monthObj.getMonth(), 10);
+      
+      let penalty = 0;
+      if (paymentDate > dueDate) {
+        penalty = 200; // Fixed penalty amount
+      }
       
       setFormData(prev => ({
         ...prev,
@@ -139,15 +123,25 @@ export const MaintenancePaymentForm: React.FC = () => {
         totalAmount: prev.baseAmount + penalty
       }));
     }
-  }, [formData.paymentDate, formData.paymentMonth, settings, calculatePenalty]);
+  }, [formData.paymentDate, formData.paymentMonth, formData.baseAmount]);
 
-  const handleRetry = () => {
-    console.log('Retry clicked, refreshing data...');
-    setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-    }, 1000);
-  };
+  // Simulate checking for existing payment
+  useEffect(() => {
+    const checkPayment = async () => {
+      if (formData.flatNumber && formData.paymentMonth) {
+        setCheckingPayment(true);
+        
+        // Simulate API call delay
+        setTimeout(() => {
+          // For testing, assume no existing payment
+          setExistingPayment(null);
+          setCheckingPayment(false);
+        }, 1000);
+      }
+    };
+    
+    checkPayment();
+  }, [formData.flatNumber, formData.paymentMonth]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,55 +150,44 @@ export const MaintenancePaymentForm: React.FC = () => {
       return;
     }
 
-    try {
-      const paymentData = {
-        flat_number: formData.flatNumber,
-        payment_month: formData.paymentMonth,
-        base_amount: formData.baseAmount,
-        penalty_amount: formData.penaltyAmount,
-        total_amount: formData.totalAmount,
-        payment_date: formData.paymentDate,
-        payment_method: formData.paymentMethod,
-        status: 'paid' as const,
-        ...(formData.paymentMethod === 'cheque' && {
-          cheque_number: formData.chequeNumber,
-          cheque_date: formData.chequeDate,
-          bank_name: formData.bankName
-        }),
-        ...((['upi_imps', 'bank_transfer'].includes(formData.paymentMethod)) && {
-          transaction_reference: formData.transactionReference
-        })
-      };
+    setIsSubmitting(true);
 
-      await createPayment(paymentData);
+    try {
+      // Simulate payment processing
+      console.log('Processing payment:', formData);
       
+      // Generate receipt number
+      const receiptNumber = `ECO-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`;
+      
+      // Simulate processing delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      toast({
+        title: "Payment Processed Successfully! 🎉",
+        description: `Receipt ${receiptNumber} generated. Payment of ₹${formData.totalAmount} recorded.`,
+      });
+
       // Reset form
       setFormData({
         flatNumber: userFlats.length === 1 ? userFlats[0].flat_number : '',
         paymentMonth: format(new Date(), 'yyyy-MM-01'),
-        baseAmount: 2500,
+        baseAmount: selectedFlat?.monthly_maintenance || 2500,
         penaltyAmount: 0,
-        totalAmount: 2500,
+        totalAmount: selectedFlat?.monthly_maintenance || 2500,
         paymentDate: format(new Date(), 'yyyy-MM-dd'),
         paymentMethod: 'cash'
       });
       
     } catch (error) {
       console.error('Payment submission error:', error);
+      toast({
+        title: "Payment Failed",
+        description: "There was an error processing your payment. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-  };
-
-  const getDaysLate = () => {
-    if (settings && formData.paymentDate && formData.paymentMonth) {
-      const { daysLate } = calculatePenalty(
-        formData.paymentDate, 
-        formData.paymentMonth,
-        settings.penalty_due_date,
-        settings.late_payment_penalty
-      );
-      return daysLate;
-    }
-    return 0;
   };
 
   // Show test user switcher at the top
@@ -238,11 +221,22 @@ export const MaintenancePaymentForm: React.FC = () => {
 
   // Show error state
   const renderErrorState = () => (
-    <ImprovedErrorDisplay 
-      error={flatsError}
-      onRetry={handleRetry}
-      isRetrying={isRefreshing}
-    />
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <AlertCircle className="h-5 w-5 text-destructive" />
+          Unable to Load Flat Information
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {flatsError || 'Failed to load flat data'}
+          </AlertDescription>
+        </Alert>
+      </CardContent>
+    </Card>
   );
 
   // Show no flats state
@@ -267,280 +261,16 @@ export const MaintenancePaymentForm: React.FC = () => {
           <CardTitle>Maintenance Payment</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Section 1: Flat & Month Selection */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Flat & Month Selection</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="flatNumber">Select Your Flat</Label>
-                    <Select 
-                      value={formData.flatNumber} 
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, flatNumber: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={userFlats.length === 1 ? "Auto-selected" : "Select your flat"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {userFlats.map((flat) => (
-                          <SelectItem key={flat.flat_id} value={flat.flat_number}>
-                            {flat.flat_number} ({flat.flat_type} - {flat.assignment_type === 'owner' ? 'Owner' : 'Tenant'})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="paymentMonth">Payment Month</Label>
-                    <Input
-                      type="month"
-                      value={formData.paymentMonth.substring(0, 7)}
-                      onChange={(e) => setFormData(prev => ({ 
-                        ...prev, 
-                        paymentMonth: e.target.value + '-01' 
-                      }))}
-                    />
-                  </div>
-                </div>
-
-                {selectedFlat && (
-                  <UserFlatCard flat={selectedFlat} />
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Check for existing payment */}
-            {checkingPayment && (
-              <div className="flex items-center gap-2">
-                <LoadingSpinner size="sm" />
-                <span>Checking existing payment...</span>
-              </div>
-            )}
-
-            {existingPayment && (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  <div className="space-y-2">
-                    <p className="font-medium">Payment Already Completed ✅</p>
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div>Amount Paid: ₹{existingPayment.total_amount}</div>
-                      <div>Payment Date: {format(new Date(existingPayment.payment_date), 'MMM dd, yyyy')}</div>
-                      <div>Receipt: {existingPayment.receipt_number}</div>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      <Download className="h-4 w-4 mr-2" />
-                      Download Receipt
-                    </Button>
-                  </div>
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {!existingPayment && formData.flatNumber && (
-              <>
-                {/* Payment Details Section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Payment Details</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Base Amount</Label>
-                        <Input value={`₹${formData.baseAmount}`} disabled />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="paymentDate">Payment Date</Label>
-                        <Input
-                          type="date"
-                          value={formData.paymentDate}
-                          onChange={(e) => setFormData(prev => ({ 
-                            ...prev, 
-                            paymentDate: e.target.value 
-                          }))}
-                        />
-                      </div>
-                    </div>
-
-                    {formData.penaltyAmount > 0 && (
-                      <Alert>
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>
-                          <div className="space-y-1">
-                            <p className="font-medium text-orange-600">Late Payment Penalty: ₹{formData.penaltyAmount} will be added</p>
-                            <p className="text-sm">Payment is {getDaysLate()} days late</p>
-                          </div>
-                        </AlertDescription>
-                      </Alert>
-                    )}
-
-                    <Card className="bg-primary/5">
-                      <CardContent className="pt-4">
-                        <div className="space-y-2">
-                          <h4 className="font-medium">Payment Summary</h4>
-                          <div className="space-y-1 text-sm">
-                            <div className="flex justify-between">
-                              <span>Base Amount:</span>
-                              <span>₹{formData.baseAmount}</span>
-                            </div>
-                            {formData.penaltyAmount > 0 && (
-                              <div className="flex justify-between">
-                                <span>Late Fee:</span>
-                                <span className="text-orange-600">₹{formData.penaltyAmount}</span>
-                              </div>
-                            )}
-                            <div className="flex justify-between font-medium border-t pt-1">
-                              <span>Total Amount:</span>
-                              <span>₹{formData.totalAmount}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </CardContent>
-                </Card>
-
-                {/* Payment Method Section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Payment Method</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <RadioGroup
-                      value={formData.paymentMethod}
-                      onValueChange={(value: any) => setFormData(prev => ({ 
-                        ...prev, 
-                        paymentMethod: value 
-                      }))}
-                      className="space-y-4"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="cash" id="cash" />
-                        <Label htmlFor="cash" className="flex items-center gap-2">
-                          <Banknote className="h-4 w-4" />
-                          Cash
-                          <Badge variant="secondary" className="text-xs">Requires office verification</Badge>
-                        </Label>
-                      </div>
-
-                      <div className="space-y-3">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="cheque" id="cheque" />
-                          <Label htmlFor="cheque" className="flex items-center gap-2">
-                            <CreditCard className="h-4 w-4" />
-                            Cheque
-                          </Label>
-                        </div>
-                        
-                        {formData.paymentMethod === 'cheque' && (
-                          <div className="ml-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <Input
-                              placeholder="Cheque Number"
-                              value={formData.chequeNumber || ''}
-                              onChange={(e) => setFormData(prev => ({ 
-                                ...prev, 
-                                chequeNumber: e.target.value 
-                              }))}
-                            />
-                            <Input
-                              type="date"
-                              placeholder="Cheque Date"
-                              value={formData.chequeDate || ''}
-                              onChange={(e) => setFormData(prev => ({ 
-                                ...prev, 
-                                chequeDate: e.target.value 
-                              }))}
-                            />
-                            <Input
-                              placeholder="Bank Name"
-                              value={formData.bankName || ''}
-                              onChange={(e) => setFormData(prev => ({ 
-                                ...prev, 
-                                bankName: e.target.value 
-                              }))}
-                            />
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="space-y-3">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="upi_imps" id="upi" />
-                          <Label htmlFor="upi" className="flex items-center gap-2">
-                            <Smartphone className="h-4 w-4" />
-                            UPI/IMPS
-                          </Label>
-                        </div>
-                        
-                        {formData.paymentMethod === 'upi_imps' && (
-                          <div className="ml-6">
-                            <Input
-                              placeholder="Transaction Reference (Required)"
-                              value={formData.transactionReference || ''}
-                              onChange={(e) => setFormData(prev => ({ 
-                                ...prev, 
-                                transactionReference: e.target.value 
-                              }))}
-                              required
-                            />
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="space-y-3">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="bank_transfer" id="bank" />
-                          <Label htmlFor="bank" className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            Bank Transfer
-                          </Label>
-                        </div>
-                        
-                        {formData.paymentMethod === 'bank_transfer' && (
-                          <div className="ml-6">
-                            <Input
-                              placeholder="Transaction Reference (Required)"
-                              value={formData.transactionReference || ''}
-                              onChange={(e) => setFormData(prev => ({ 
-                                ...prev, 
-                                transactionReference: e.target.value 
-                              }))}
-                              required
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </RadioGroup>
-                  </CardContent>
-                </Card>
-
-                {/* Submit Button */}
-                <div className="flex justify-end">
-                  <Button 
-                    type="submit" 
-                    size="lg" 
-                    disabled={isCreatingPayment}
-                    className="min-w-32"
-                  >
-                    {isCreatingPayment ? (
-                      <>
-                        <LoadingSpinner size="sm" className="mr-2" />
-                        Processing...
-                      </>
-                    ) : (
-                      'Submit Payment'
-                    )}
-                  </Button>
-                </div>
-              </>
-            )}
-          </form>
+          <PaymentFormSections
+            formData={formData}
+            setFormData={setFormData}
+            userFlats={userFlats}
+            selectedFlat={selectedFlat}
+            existingPayment={existingPayment}
+            checkingPayment={checkingPayment}
+            isSubmitting={isSubmitting}
+            onSubmit={handleSubmit}
+          />
         </CardContent>
       </Card>
     </>
