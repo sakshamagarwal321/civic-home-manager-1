@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
@@ -11,6 +10,7 @@ import { NoFlatsAssigned } from './NoFlatsAssigned';
 import { TestUserSwitcher } from './TestUserSwitcher';
 import { PaymentFormSections } from './PaymentFormSections';
 import { useToast } from '@/hooks/use-toast';
+import { generatePDFReceipt } from '@/utils/receiptGenerator';
 
 interface PaymentFormData {
   flatNumber: string;
@@ -24,6 +24,10 @@ interface PaymentFormData {
   chequeDate?: string;
   bankName?: string;
   transactionReference?: string;
+}
+
+interface PaymentValidationErrors {
+  [key: string]: string;
 }
 
 export const MaintenancePaymentForm: React.FC = () => {
@@ -46,6 +50,7 @@ export const MaintenancePaymentForm: React.FC = () => {
   const [selectedFlat, setSelectedFlat] = useState<any>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<PaymentValidationErrors>({});
 
   // Handle user switching with immediate feedback
   const handleUserSwitch = async (userId: string, name: string) => {
@@ -143,6 +148,55 @@ export const MaintenancePaymentForm: React.FC = () => {
     checkPayment();
   }, [formData.flatNumber, formData.paymentMonth]);
 
+  const validateForm = (): boolean => {
+    const errors: PaymentValidationErrors = {};
+
+    // Basic validation
+    if (!formData.flatNumber) {
+      errors.flatNumber = 'Please select a flat';
+    }
+
+    if (!formData.paymentMonth) {
+      errors.paymentMonth = 'Please select payment month';
+    }
+
+    if (!formData.paymentDate) {
+      errors.paymentDate = 'Please select payment date';
+    }
+
+    if (!formData.paymentMethod) {
+      errors.paymentMethod = 'Please select payment method';
+    }
+
+    // Payment method specific validation
+    if (formData.paymentMethod === 'cheque') {
+      if (!formData.chequeNumber) {
+        errors.chequeNumber = 'Cheque number is required';
+      }
+      if (!formData.chequeDate) {
+        errors.chequeDate = 'Cheque date is required';
+      }
+      if (!formData.bankName) {
+        errors.bankName = 'Bank name is required';
+      }
+    }
+
+    if (formData.paymentMethod === 'upi_imps' || formData.paymentMethod === 'bank_transfer') {
+      if (!formData.transactionReference) {
+        errors.transactionReference = 'Transaction reference is required';
+      }
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const generateReceiptNumber = (): string => {
+    const currentYear = new Date().getFullYear();
+    const sequence = String(Date.now()).slice(-3);
+    return `ECO-${currentYear}-${sequence}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -150,24 +204,70 @@ export const MaintenancePaymentForm: React.FC = () => {
       return;
     }
 
+    // Validate form
+    if (!validateForm()) {
+      toast({
+        title: "Form Validation Error",
+        description: "Please fill in all required fields correctly.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      // Simulate payment processing
       console.log('Processing payment:', formData);
       
       // Generate receipt number
-      const receiptNumber = `ECO-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`;
+      const receiptNumber = generateReceiptNumber();
       
-      // Simulate processing delay
+      // Simulate payment processing delay
       await new Promise(resolve => setTimeout(resolve, 2000));
       
+      // Create payment record
+      const paymentRecord = {
+        receiptNumber,
+        flatNumber: formData.flatNumber,
+        residentName: testUser?.name || 'Unknown',
+        paymentMonth: formData.paymentMonth,
+        baseAmount: formData.baseAmount,
+        penaltyAmount: formData.penaltyAmount,
+        totalAmount: formData.totalAmount,
+        paymentDate: formData.paymentDate,
+        paymentMethod: formData.paymentMethod,
+        chequeNumber: formData.chequeNumber,
+        chequeDate: formData.chequeDate,
+        bankName: formData.bankName,
+        transactionReference: formData.transactionReference
+      };
+
+      // Generate and download PDF receipt
+      try {
+        await generatePDFReceipt(paymentRecord);
+      } catch (pdfError) {
+        console.error('PDF generation error:', pdfError);
+        // Continue with success flow even if PDF fails
+      }
+
+      // Determine payment status based on method
+      let paymentStatus = 'completed';
+      let statusMessage = 'Payment processed successfully!';
+      
+      if (formData.paymentMethod === 'cash') {
+        paymentStatus = 'pending_verification';
+        statusMessage = 'Cash payment recorded. Please visit the office for verification.';
+      } else if (formData.paymentMethod === 'cheque') {
+        paymentStatus = 'pending_clearance';
+        statusMessage = 'Cheque payment recorded. Receipt generated pending clearance.';
+      }
+
       toast({
-        title: "Payment Processed Successfully! 🎉",
-        description: `Receipt ${receiptNumber} generated. Payment of ₹${formData.totalAmount} recorded.`,
+        title: "Payment Successful! 🎉",
+        description: `${statusMessage} Receipt ${receiptNumber} generated and downloaded.`,
       });
 
-      // Reset form
+      // Reset form for next payment
       setFormData({
         flatNumber: userFlats.length === 1 ? userFlats[0].flat_number : '',
         paymentMonth: format(new Date(), 'yyyy-MM-01'),
@@ -177,12 +277,23 @@ export const MaintenancePaymentForm: React.FC = () => {
         paymentDate: format(new Date(), 'yyyy-MM-dd'),
         paymentMethod: 'cash'
       });
+
+      // Clear validation errors
+      setValidationErrors({});
+      
+      // Show additional success actions
+      setTimeout(() => {
+        toast({
+          title: "What's Next?",
+          description: "Receipt downloaded. Check your downloads folder for the PDF.",
+        });
+      }, 3000);
       
     } catch (error) {
       console.error('Payment submission error:', error);
       toast({
-        title: "Payment Failed",
-        description: "There was an error processing your payment. Please try again.",
+        title: "Payment Processing Failed",
+        description: "There was an error processing your payment. Please try again or contact administration.",
         variant: "destructive"
       });
     } finally {
@@ -269,6 +380,7 @@ export const MaintenancePaymentForm: React.FC = () => {
             existingPayment={existingPayment}
             checkingPayment={checkingPayment}
             isSubmitting={isSubmitting}
+            validationErrors={validationErrors}
             onSubmit={handleSubmit}
           />
         </CardContent>

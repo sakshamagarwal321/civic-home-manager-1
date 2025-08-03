@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +26,10 @@ interface PaymentFormData {
   transactionReference?: string;
 }
 
+interface PaymentValidationErrors {
+  [key: string]: string;
+}
+
 interface PaymentFormSectionsProps {
   formData: PaymentFormData;
   setFormData: React.Dispatch<React.SetStateAction<PaymentFormData>>;
@@ -35,6 +38,7 @@ interface PaymentFormSectionsProps {
   existingPayment: any;
   checkingPayment: boolean;
   isSubmitting: boolean;
+  validationErrors: PaymentValidationErrors;
   onSubmit: (e: React.FormEvent) => void;
 }
 
@@ -46,6 +50,7 @@ export const PaymentFormSections: React.FC<PaymentFormSectionsProps> = ({
   existingPayment,
   checkingPayment,
   isSubmitting,
+  validationErrors,
   onSubmit
 }) => {
   const getDaysLate = () => {
@@ -60,6 +65,8 @@ export const PaymentFormSections: React.FC<PaymentFormSectionsProps> = ({
     }
     return 0;
   };
+
+  const getFieldError = (fieldName: string) => validationErrors[fieldName];
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
@@ -76,7 +83,7 @@ export const PaymentFormSections: React.FC<PaymentFormSectionsProps> = ({
                 value={formData.flatNumber} 
                 onValueChange={(value) => setFormData(prev => ({ ...prev, flatNumber: value }))}
               >
-                <SelectTrigger>
+                <SelectTrigger className={getFieldError('flatNumber') ? 'border-red-500' : ''}>
                   <SelectValue placeholder={userFlats.length === 1 ? "Auto-selected" : "Select your flat"} />
                 </SelectTrigger>
                 <SelectContent>
@@ -87,6 +94,9 @@ export const PaymentFormSections: React.FC<PaymentFormSectionsProps> = ({
                   ))}
                 </SelectContent>
               </Select>
+              {getFieldError('flatNumber') && (
+                <p className="text-sm text-red-500">{getFieldError('flatNumber')}</p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -98,7 +108,11 @@ export const PaymentFormSections: React.FC<PaymentFormSectionsProps> = ({
                   ...prev, 
                   paymentMonth: e.target.value + '-01' 
                 }))}
+                className={getFieldError('paymentMonth') ? 'border-red-500' : ''}
               />
+              {getFieldError('paymentMonth') && (
+                <p className="text-sm text-red-500">{getFieldError('paymentMonth')}</p>
+              )}
             </div>
           </div>
 
@@ -197,7 +211,11 @@ export const PaymentFormSections: React.FC<PaymentFormSectionsProps> = ({
                       ...prev, 
                       paymentDate: e.target.value 
                     }))}
+                    className={getFieldError('paymentDate') ? 'border-red-500' : ''}
                   />
+                  {getFieldError('paymentDate') && (
+                    <p className="text-sm text-red-500">{getFieldError('paymentDate')}</p>
+                  )}
                 </div>
               </div>
 
@@ -275,31 +293,49 @@ export const PaymentFormSections: React.FC<PaymentFormSectionsProps> = ({
                   
                   {formData.paymentMethod === 'cheque' && (
                     <div className="ml-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <Input
-                        placeholder="Cheque Number"
-                        value={formData.chequeNumber || ''}
-                        onChange={(e) => setFormData(prev => ({ 
-                          ...prev, 
-                          chequeNumber: e.target.value 
-                        }))}
-                      />
-                      <Input
-                        type="date"
-                        placeholder="Cheque Date"
-                        value={formData.chequeDate || ''}
-                        onChange={(e) => setFormData(prev => ({ 
-                          ...prev, 
-                          chequeDate: e.target.value 
-                        }))}
-                      />
-                      <Input
-                        placeholder="Bank Name"
-                        value={formData.bankName || ''}
-                        onChange={(e) => setFormData(prev => ({ 
-                          ...prev, 
-                          bankName: e.target.value 
-                        }))}
-                      />
+                      <div className="space-y-1">
+                        <Input
+                          placeholder="Cheque Number"
+                          value={formData.chequeNumber || ''}
+                          onChange={(e) => setFormData(prev => ({ 
+                            ...prev, 
+                            chequeNumber: e.target.value 
+                          }))}
+                          className={getFieldError('chequeNumber') ? 'border-red-500' : ''}
+                        />
+                        {getFieldError('chequeNumber') && (
+                          <p className="text-xs text-red-500">{getFieldError('chequeNumber')}</p>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        <Input
+                          type="date"
+                          placeholder="Cheque Date"
+                          value={formData.chequeDate || ''}
+                          onChange={(e) => setFormData(prev => ({ 
+                            ...prev, 
+                            chequeDate: e.target.value 
+                          }))}
+                          className={getFieldError('chequeDate') ? 'border-red-500' : ''}
+                        />
+                        {getFieldError('chequeDate') && (
+                          <p className="text-xs text-red-500">{getFieldError('chequeDate')}</p>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        <Input
+                          placeholder="Bank Name"
+                          value={formData.bankName || ''}
+                          onChange={(e) => setFormData(prev => ({ 
+                            ...prev, 
+                            bankName: e.target.value 
+                          }))}
+                          className={getFieldError('bankName') ? 'border-red-500' : ''}
+                        />
+                        {getFieldError('bankName') && (
+                          <p className="text-xs text-red-500">{getFieldError('bankName')}</p>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -314,7 +350,7 @@ export const PaymentFormSections: React.FC<PaymentFormSectionsProps> = ({
                   </div>
                   
                   {formData.paymentMethod === 'upi_imps' && (
-                    <div className="ml-6">
+                    <div className="ml-6 space-y-1">
                       <Input
                         placeholder="Transaction Reference (Required)"
                         value={formData.transactionReference || ''}
@@ -322,8 +358,11 @@ export const PaymentFormSections: React.FC<PaymentFormSectionsProps> = ({
                           ...prev, 
                           transactionReference: e.target.value 
                         }))}
-                        required
+                        className={getFieldError('transactionReference') ? 'border-red-500' : ''}
                       />
+                      {getFieldError('transactionReference') && (
+                        <p className="text-xs text-red-500">{getFieldError('transactionReference')}</p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -338,7 +377,7 @@ export const PaymentFormSections: React.FC<PaymentFormSectionsProps> = ({
                   </div>
                   
                   {formData.paymentMethod === 'bank_transfer' && (
-                    <div className="ml-6">
+                    <div className="ml-6 space-y-1">
                       <Input
                         placeholder="Transaction Reference (Required)"
                         value={formData.transactionReference || ''}
@@ -346,33 +385,60 @@ export const PaymentFormSections: React.FC<PaymentFormSectionsProps> = ({
                           ...prev, 
                           transactionReference: e.target.value 
                         }))}
-                        required
+                        className={getFieldError('transactionReference') ? 'border-red-500' : ''}
                       />
+                      {getFieldError('transactionReference') && (
+                        <p className="text-xs text-red-500">{getFieldError('transactionReference')}</p>
+                      )}
                     </div>
                   )}
                 </div>
               </RadioGroup>
+
+              {getFieldError('paymentMethod') && (
+                <p className="text-sm text-red-500 mt-2">{getFieldError('paymentMethod')}</p>
+              )}
             </CardContent>
           </Card>
 
           {/* Submit Button */}
-          <div className="flex justify-end">
+          <div className="flex justify-end space-x-4">
             <Button 
               type="submit" 
               size="lg" 
               disabled={isSubmitting}
-              className="min-w-32"
+              className="min-w-40 bg-green-600 hover:bg-green-700"
             >
               {isSubmitting ? (
                 <>
                   <LoadingSpinner size="sm" className="mr-2" />
-                  Processing...
+                  Processing Payment...
                 </>
               ) : (
-                'Submit Payment'
+                <>
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Submit Payment
+                </>
               )}
             </Button>
           </div>
+
+          {/* Payment Processing Info */}
+          {isSubmitting && (
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-2">
+                  <LoadingSpinner size="sm" />
+                  <div>
+                    <p className="font-medium text-blue-800">Processing your payment...</p>
+                    <p className="text-sm text-blue-600">
+                      Generating receipt number and preparing PDF download
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </>
       )}
     </form>
