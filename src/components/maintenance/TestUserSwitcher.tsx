@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { User, CheckCircle } from 'lucide-react';
+import { User, CheckCircle, RefreshCw } from 'lucide-react';
 
 interface TestUser {
   id: string;
@@ -43,6 +43,7 @@ export const TestUserSwitcher: React.FC<TestUserSwitcherProps> = ({
   onUserSwitch 
 }) => {
   const handleUserSwitch = (userId: string, name: string) => {
+    console.log('=== USER SWITCH TRIGGERED ===');
     console.log('Switching to user:', { userId, name });
     onUserSwitch(userId, name);
   };
@@ -77,12 +78,13 @@ export const TestUserSwitcher: React.FC<TestUserSwitcherProps> = ({
           })}
         </div>
         {currentUser && (
-          <div className="p-2 bg-green-50 border border-green-200 rounded text-sm">
-            <p className="text-green-800">
+          <div className="p-3 bg-green-50 border border-green-200 rounded text-sm">
+            <p className="text-green-800 font-medium">
               ✓ Currently logged in as: <strong>{currentUser.name}</strong>
             </p>
-            <p className="text-green-600 text-xs">
-              System will now load flats assigned to this user
+            <p className="text-green-600 text-xs mt-1">
+              <RefreshCw className="inline h-3 w-3 mr-1" />
+              Loading flats assigned to this user...
             </p>
           </div>
         )}
