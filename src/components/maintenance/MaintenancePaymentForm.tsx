@@ -225,21 +225,19 @@ export const MaintenancePaymentForm: React.FC = () => {
       // Simulate payment processing delay
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Create payment record
+      // Create payment record with correct property names for ReceiptData interface
       const paymentRecord = {
-        receiptNumber,
-        flatNumber: formData.flatNumber,
-        residentName: testUser?.name || 'Unknown',
-        paymentMonth: formData.paymentMonth,
-        baseAmount: formData.baseAmount,
-        penaltyAmount: formData.penaltyAmount,
-        totalAmount: formData.totalAmount,
-        paymentDate: formData.paymentDate,
-        paymentMethod: formData.paymentMethod,
-        chequeNumber: formData.chequeNumber,
-        chequeDate: formData.chequeDate,
-        bankName: formData.bankName,
-        transactionReference: formData.transactionReference
+        receipt_number: receiptNumber,
+        flat_number: formData.flatNumber,
+        resident_name: testUser?.name || 'Unknown',
+        payment_date: formData.paymentDate,
+        payment_month: formData.paymentMonth,
+        base_amount: formData.baseAmount,
+        penalty_amount: formData.penaltyAmount,
+        total_amount: formData.totalAmount,
+        payment_method: formData.paymentMethod,
+        society_name: 'ECO RESIDENTS WELFARE SOCIETY',
+        society_address: 'Block A, Sector 15\nNoida, Uttar Pradesh - 201301\nPhone: +91-120-1234567'
       };
 
       // Generate and download PDF receipt
