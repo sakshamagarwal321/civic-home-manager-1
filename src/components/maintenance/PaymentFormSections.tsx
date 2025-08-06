@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -68,8 +69,30 @@ export const PaymentFormSections: React.FC<PaymentFormSectionsProps> = ({
 
   const getFieldError = (fieldName: string) => validationErrors[fieldName];
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    console.log('=== PAYMENT FORM SECTIONS: Form submit triggered ===');
+    console.log('Event object:', e);
+    console.log('Form data at submission:', formData);
+    console.log('Is submitting:', isSubmitting);
+    console.log('Existing payment:', existingPayment);
+    console.log('Validation errors:', validationErrors);
+    
+    try {
+      onSubmit(e);
+    } catch (error) {
+      console.error('Error in form submit handler:', error);
+    }
+  };
+
+  const handleButtonClick = (e: React.MouseEvent) => {
+    console.log('=== SUBMIT BUTTON CLICKED ===');
+    console.log('Button click event:', e);
+    console.log('Button disabled state:', isSubmitting);
+    console.log('Form data:', formData);
+  };
+
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
+    <form onSubmit={handleFormSubmit} className="space-y-6">
       {/* Section 1: Flat & Month Selection */}
       <Card>
         <CardHeader>
@@ -407,6 +430,7 @@ export const PaymentFormSections: React.FC<PaymentFormSectionsProps> = ({
               type="submit" 
               size="lg" 
               disabled={isSubmitting}
+              onClick={handleButtonClick}
               className="min-w-40 bg-green-600 hover:bg-green-700"
             >
               {isSubmitting ? (

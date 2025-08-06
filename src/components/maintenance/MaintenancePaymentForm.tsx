@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
@@ -149,6 +150,9 @@ export const MaintenancePaymentForm: React.FC = () => {
   }, [formData.flatNumber, formData.paymentMonth]);
 
   const validateForm = (): boolean => {
+    console.log('=== VALIDATING FORM ===');
+    console.log('Form data:', formData);
+    
     const errors: PaymentValidationErrors = {};
 
     // Basic validation
@@ -187,6 +191,7 @@ export const MaintenancePaymentForm: React.FC = () => {
       }
     }
 
+    console.log('Validation errors:', errors);
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -198,14 +203,30 @@ export const MaintenancePaymentForm: React.FC = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log('=== PAYMENT FORM SUBMIT TRIGGERED ===');
+    console.log('Event:', e);
+    
     e.preventDefault();
     
+    console.log('Form submission started');
+    console.log('Current form data:', formData);
+    console.log('Existing payment:', existingPayment);
+    console.log('Is submitting:', isSubmitting);
+    
     if (existingPayment) {
+      console.log('Payment already exists, blocking submission');
+      toast({
+        title: "Payment Already Exists",
+        description: "This flat already has a payment for the selected month.",
+        variant: "destructive"
+      });
       return;
     }
 
     // Validate form
+    console.log('Starting form validation...');
     if (!validateForm()) {
+      console.log('Form validation failed');
       toast({
         title: "Form Validation Error",
         description: "Please fill in all required fields correctly.",
@@ -214,6 +235,7 @@ export const MaintenancePaymentForm: React.FC = () => {
       return;
     }
 
+    console.log('Form validation passed, proceeding with payment...');
     setIsSubmitting(true);
 
     try {
@@ -221,8 +243,10 @@ export const MaintenancePaymentForm: React.FC = () => {
       
       // Generate receipt number
       const receiptNumber = generateReceiptNumber();
+      console.log('Generated receipt number:', receiptNumber);
       
       // Simulate payment processing delay
+      console.log('Simulating payment processing delay...');
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Create payment record with correct property names for ReceiptData interface
@@ -240,9 +264,13 @@ export const MaintenancePaymentForm: React.FC = () => {
         society_address: 'Block A, Sector 15\nNoida, Uttar Pradesh - 201301\nPhone: +91-120-1234567'
       };
 
+      console.log('Created payment record:', paymentRecord);
+
       // Generate and download PDF receipt
       try {
+        console.log('Generating PDF receipt...');
         await generatePDFReceipt(paymentRecord);
+        console.log('PDF receipt generated successfully');
       } catch (pdfError) {
         console.error('PDF generation error:', pdfError);
         // Continue with success flow even if PDF fails
@@ -260,12 +288,16 @@ export const MaintenancePaymentForm: React.FC = () => {
         statusMessage = 'Cheque payment recorded. Receipt generated pending clearance.';
       }
 
+      console.log('Payment status:', paymentStatus);
+      console.log('Status message:', statusMessage);
+
       toast({
         title: "Payment Successful! 🎉",
         description: `${statusMessage} Receipt ${receiptNumber} generated and downloaded.`,
       });
 
       // Reset form for next payment
+      console.log('Resetting form for next payment...');
       setFormData({
         flatNumber: userFlats.length === 1 ? userFlats[0].flat_number : '',
         paymentMonth: format(new Date(), 'yyyy-MM-01'),
@@ -289,12 +321,15 @@ export const MaintenancePaymentForm: React.FC = () => {
       
     } catch (error) {
       console.error('Payment submission error:', error);
+      console.error('Error details:', error);
+      
       toast({
         title: "Payment Processing Failed",
-        description: "There was an error processing your payment. Please try again or contact administration.",
+        description: `There was an error processing your payment: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or contact administration.`,
         variant: "destructive"
       });
     } finally {
+      console.log('Payment submission completed, resetting submitting state');
       setIsSubmitting(false);
     }
   };
