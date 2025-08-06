@@ -17,6 +17,8 @@ interface ReceiptData {
 }
 
 export const generatePDFReceipt = (receiptData: ReceiptData): string => {
+  console.log('Starting PDF generation for receipt:', receiptData.receipt_number);
+  
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -132,6 +134,7 @@ export const generatePDFReceipt = (receiptData: ReceiptData): string => {
   pdf.line(20, yPos, 80, yPos);
   pdf.text('Signature', 20, yPos + 7);
 
+  console.log('PDF generation completed successfully');
   return pdf.output('datauristring');
 };
 

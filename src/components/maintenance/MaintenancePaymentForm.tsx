@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
@@ -10,7 +9,7 @@ import { format } from 'date-fns';
 import { NoFlatsAssigned } from './NoFlatsAssigned';
 import { TestUserSwitcher } from './TestUserSwitcher';
 import { PaymentFormSections } from './PaymentFormSections';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { generatePDFReceipt } from '@/utils/receiptGenerator';
 
 interface PaymentFormData {
@@ -34,7 +33,6 @@ interface PaymentValidationErrors {
 export const MaintenancePaymentForm: React.FC = () => {
   const { user: testUser, switchUser } = useTestAuth();
   const { userFlats, isLoading: flatsLoading, error: flatsError, refetch } = useTestFlatData();
-  const { toast } = useToast();
 
   const [formData, setFormData] = useState<PaymentFormData>({
     flatNumber: '',
@@ -202,6 +200,44 @@ export const MaintenancePaymentForm: React.FC = () => {
     return `ECO-${currentYear}-${sequence}`;
   };
 
+  const downloadPDF = (pdfDataUri: string, filename: string) => {
+    try {
+      console.log('Triggering PDF download...');
+      const link = document.createElement('a');
+      link.href = pdfDataUri;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      console.log('PDF download triggered successfully');
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      throw error;
+    }
+  };
+
+  const resetForm = () => {
+    console.log('Resetting form for next payment...');
+    const resetFormData = {
+      flatNumber: userFlats.length === 1 ? userFlats[0].flat_number : '',
+      paymentMonth: format(new Date(), 'yyyy-MM-01'),
+      baseAmount: selectedFlat?.monthly_maintenance || 2500,
+      penaltyAmount: 0,
+      totalAmount: selectedFlat?.monthly_maintenance || 2500,
+      paymentDate: format(new Date(), 'yyyy-MM-dd'),
+      paymentMethod: 'cash' as const,
+      chequeNumber: undefined,
+      chequeDate: undefined,
+      bankName: undefined,
+      transactionReference: undefined
+    };
+    
+    console.log('Setting form data to:', resetFormData);
+    setFormData(resetFormData);
+    setValidationErrors({});
+    console.log('Form reset completed');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     console.log('=== PAYMENT FORM SUBMIT TRIGGERED ===');
     console.log('Event:', e);
@@ -215,10 +251,8 @@ export const MaintenancePaymentForm: React.FC = () => {
     
     if (existingPayment) {
       console.log('Payment already exists, blocking submission');
-      toast({
-        title: "Payment Already Exists",
-        description: "This flat already has a payment for the selected month.",
-        variant: "destructive"
+      toast.error("Payment Already Exists", {
+        description: "This flat already has a payment for the selected month."
       });
       return;
     }
@@ -227,10 +261,8 @@ export const MaintenancePaymentForm: React.FC = () => {
     console.log('Starting form validation...');
     if (!validateForm()) {
       console.log('Form validation failed');
-      toast({
-        title: "Form Validation Error",
-        description: "Please fill in all required fields correctly.",
-        variant: "destructive"
+      toast.error("Form Validation Error", {
+        description: "Please fill in all required fields correctly."
       });
       return;
     }
@@ -269,10 +301,18 @@ export const MaintenancePaymentForm: React.FC = () => {
       // Generate and download PDF receipt
       try {
         console.log('Generating PDF receipt...');
-        await generatePDFReceipt(paymentRecord);
+        const pdfDataUri = generatePDFReceipt(paymentRecord);
         console.log('PDF receipt generated successfully');
+        
+        // Download the PDF
+        const filename = `receipt-${receiptNumber}.pdf`;
+        downloadPDF(pdfDataUri, filename);
+        
       } catch (pdfError) {
         console.error('PDF generation error:', pdfError);
+        toast.error("PDF Generation Failed", {
+          description: "Payment recorded but receipt couldn't be generated. Please contact administration."
+        });
         // Continue with success flow even if PDF fails
       }
 
@@ -291,42 +331,25 @@ export const MaintenancePaymentForm: React.FC = () => {
       console.log('Payment status:', paymentStatus);
       console.log('Status message:', statusMessage);
 
-      toast({
-        title: "Payment Successful! 🎉",
-        description: `${statusMessage} Receipt ${receiptNumber} generated and downloaded.`,
+      toast.success("Payment Successful! 🎉", {
+        description: `${statusMessage} Receipt ${receiptNumber} generated and downloaded.`
       });
 
       // Reset form for next payment
-      console.log('Resetting form for next payment...');
-      setFormData({
-        flatNumber: userFlats.length === 1 ? userFlats[0].flat_number : '',
-        paymentMonth: format(new Date(), 'yyyy-MM-01'),
-        baseAmount: selectedFlat?.monthly_maintenance || 2500,
-        penaltyAmount: 0,
-        totalAmount: selectedFlat?.monthly_maintenance || 2500,
-        paymentDate: format(new Date(), 'yyyy-MM-dd'),
-        paymentMethod: 'cash'
-      });
-
-      // Clear validation errors
-      setValidationErrors({});
+      resetForm();
       
       // Show additional success actions
       setTimeout(() => {
-        toast({
-          title: "What's Next?",
-          description: "Receipt downloaded. Check your downloads folder for the PDF.",
+        toast.success("What's Next?", {
+          description: "Receipt downloaded. Check your downloads folder for the PDF."
         });
       }, 3000);
       
     } catch (error) {
       console.error('Payment submission error:', error);
-      console.error('Error details:', error);
       
-      toast({
-        title: "Payment Processing Failed",
-        description: `There was an error processing your payment: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or contact administration.`,
-        variant: "destructive"
+      toast.error("Payment Processing Failed", {
+        description: `There was an error processing your payment: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or contact administration.`
       });
     } finally {
       console.log('Payment submission completed, resetting submitting state');
@@ -334,12 +357,10 @@ export const MaintenancePaymentForm: React.FC = () => {
     }
   };
 
-  // Show test user switcher at the top
   const renderTestUserSwitcher = () => (
     <TestUserSwitcher currentUser={testUser} onUserSwitch={handleUserSwitch} />
   );
 
-  // Show loading state
   const renderLoadingState = () => (
     <Card>
       <CardContent className="flex items-center justify-center py-8">
@@ -351,7 +372,6 @@ export const MaintenancePaymentForm: React.FC = () => {
     </Card>
   );
 
-  // Show refreshing state
   const renderRefreshingState = () => (
     <Card>
       <CardContent className="flex items-center justify-center py-8">
@@ -363,7 +383,6 @@ export const MaintenancePaymentForm: React.FC = () => {
     </Card>
   );
 
-  // Show error state
   const renderErrorState = () => (
     <Card>
       <CardHeader>
@@ -383,13 +402,10 @@ export const MaintenancePaymentForm: React.FC = () => {
     </Card>
   );
 
-  // Show no flats state
   const renderNoFlatsState = () => <NoFlatsAssigned />;
 
-  // Show successful flat loading with payment form
   const renderPaymentForm = () => (
     <>
-      {/* Success indicator */}
       <Alert className="mb-4 bg-green-50 border-green-200">
         <CheckCircle className="h-4 w-4 text-green-600" />
         <AlertDescription className="text-green-800">
@@ -399,7 +415,6 @@ export const MaintenancePaymentForm: React.FC = () => {
         </AlertDescription>
       </Alert>
 
-      {/* Payment form */}
       <Card>
         <CardHeader>
           <CardTitle>Maintenance Payment</CardTitle>
@@ -425,7 +440,6 @@ export const MaintenancePaymentForm: React.FC = () => {
     <div className="max-w-4xl mx-auto space-y-6">
       {renderTestUserSwitcher()}
       
-      {/* Show different states based on loading and data */}
       {isRefreshing && renderRefreshingState()}
       
       {!isRefreshing && flatsLoading && renderLoadingState()}
