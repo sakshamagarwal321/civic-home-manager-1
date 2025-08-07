@@ -16,7 +16,7 @@ interface ReceiptData {
   society_address: string;
 }
 
-export const generatePDFReceipt = (receiptData: ReceiptData): string => {
+export const generatePDFReceipt = (receiptData: ReceiptData): Blob => {
   console.log('Starting enhanced graphical PDF generation for receipt:', receiptData.receipt_number);
   
   const pdf = new jsPDF({
@@ -400,7 +400,7 @@ export const generatePDFReceipt = (receiptData: ReceiptData): string => {
   pdf.text('For queries, contact: admin@ecoresidents.com | +91-120-1234567', 25, yPos);
 
   console.log('Enhanced graphical PDF generation completed successfully');
-  return pdf.output('datauristring');
+  return pdf.output('blob');
 };
 
 // Helper function to convert number to words (enhanced version)

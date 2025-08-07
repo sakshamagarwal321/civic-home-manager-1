@@ -200,15 +200,19 @@ export const MaintenancePaymentForm: React.FC = () => {
     return `ECO-${currentYear}-${sequence}`;
   };
 
-  const downloadPDF = (pdfDataUri: string, filename: string) => {
+  const downloadPDF = (pdfBlob: Blob, filename: string) => {
     try {
-      console.log('Triggering PDF download...');
+      console.log('Triggering PDF download with blob...');
+      const url = URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
-      link.href = pdfDataUri;
+      link.href = url;
       link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      
+      // Clean up the temporary URL
+      URL.revokeObjectURL(url);
       console.log('PDF download triggered successfully');
     } catch (error) {
       console.error('Error downloading PDF:', error);
@@ -301,12 +305,12 @@ export const MaintenancePaymentForm: React.FC = () => {
       // Generate and download PDF receipt
       try {
         console.log('Generating PDF receipt...');
-        const pdfDataUri = generatePDFReceipt(paymentRecord);
-        console.log('PDF receipt generated successfully');
+        const pdfBlob = generatePDFReceipt(paymentRecord);
+        console.log('PDF receipt generated successfully as blob');
         
         // Download the PDF
         const filename = `receipt-${receiptNumber}.pdf`;
-        downloadPDF(pdfDataUri, filename);
+        downloadPDF(pdfBlob, filename);
         
       } catch (pdfError) {
         console.error('PDF generation error:', pdfError);
