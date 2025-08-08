@@ -202,21 +202,51 @@ export const MaintenancePaymentForm: React.FC = () => {
 
   const downloadPDF = (pdfBlob: Blob, filename: string) => {
     try {
-      console.log('Triggering PDF download with blob...');
+      console.log('Triggering PDF download with blob size:', pdfBlob.size);
+      
+      // Check if we're in Internet Explorer
+      if (window.navigator && (window.navigator as any).msSaveOrOpenBlob) {
+        (window.navigator as any).msSaveOrOpenBlob(pdfBlob, filename);
+        console.log('PDF downloaded via IE method');
+        return;
+      }
+      
+      // Modern browser method
       const url = URL.createObjectURL(pdfBlob);
+      console.log('Created blob URL:', url);
+      
       const link = document.createElement('a');
       link.href = url;
       link.download = filename;
+      link.style.display = 'none'; // Hide the link
+      
+      // Add to DOM, click, and remove
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
-      // Clean up the temporary URL
-      URL.revokeObjectURL(url);
+      // Clean up the URL after a short delay to ensure download started
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+        console.log('Blob URL revoked');
+      }, 100);
+      
       console.log('PDF download triggered successfully');
     } catch (error) {
       console.error('Error downloading PDF:', error);
-      throw error;
+      
+      // Fallback: try to open in new window
+      try {
+        const url = URL.createObjectURL(pdfBlob);
+        const newWindow = window.open(url, '_blank');
+        if (!newWindow) {
+          throw new Error('Popup blocked');
+        }
+        console.log('PDF opened in new window as fallback');
+      } catch (fallbackError) {
+        console.error('Fallback method also failed:', fallbackError);
+        throw new Error('Unable to download PDF. Please check your browser settings.');
+      }
     }
   };
 
@@ -303,19 +333,21 @@ export const MaintenancePaymentForm: React.FC = () => {
       console.log('Created payment record:', paymentRecord);
 
       // Generate and download PDF receipt
+      let pdfDownloaded = false;
       try {
         console.log('Generating PDF receipt...');
         const pdfBlob = generatePDFReceipt(paymentRecord);
-        console.log('PDF receipt generated successfully as blob');
+        console.log('PDF receipt generated successfully as blob, size:', pdfBlob.size);
         
         // Download the PDF
         const filename = `receipt-${receiptNumber}.pdf`;
-        downloadPDF(pdfBlob, filename);
+        await downloadPDF(pdfBlob, filename);
+        pdfDownloaded = true;
         
       } catch (pdfError) {
-        console.error('PDF generation error:', pdfError);
+        console.error('PDF generation/download error:', pdfError);
         toast.error("PDF Generation Failed", {
-          description: "Payment recorded but receipt couldn't be generated. Please contact administration."
+          description: "Payment recorded but receipt couldn't be downloaded. Please contact administration."
         });
         // Continue with success flow even if PDF fails
       }
@@ -335,9 +367,15 @@ export const MaintenancePaymentForm: React.FC = () => {
       console.log('Payment status:', paymentStatus);
       console.log('Status message:', statusMessage);
 
-      toast.success("Payment Successful! 🎉", {
-        description: `${statusMessage} Receipt ${receiptNumber} generated and downloaded.`
-      });
+      if (pdfDownloaded) {
+        toast.success("Payment Successful! 🎉", {
+          description: `${statusMessage} Receipt ${receiptNumber} has been downloaded to your device.`
+        });
+      } else {
+        toast.success("Payment Processed", {
+          description: `${statusMessage} Receipt could not be downloaded automatically.`
+        });
+      }
 
       // Reset form for next payment
       resetForm();

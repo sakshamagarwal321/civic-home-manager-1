@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
 
@@ -39,18 +38,16 @@ export const generatePDFReceipt = (receiptData: ReceiptData): Blob => {
 
   let yPos = 15;
 
-  // Create watermark background pattern
-  pdf.setGState({ opacity: 0.03 });
+  // Create simple background pattern
   pdf.setFillColor(brandSecondary);
-  for (let x = 0; x < 210; x += 40) {
-    for (let y = 0; y < 297; y += 40) {
-      pdf.circle(x, y, 15, 'F');
+  for (let x = 0; x < 210; x += 60) {
+    for (let y = 0; y < 297; y += 60) {
+      pdf.setFillColor('#f1f5f9'); // Very light background
+      pdf.circle(x, y, 8, 'F');
     }
   }
-  pdf.setGState({ opacity: 1 });
 
   // Enhanced Header with Gradient Effect
-  // Main header background with gradient simulation
   pdf.setFillColor(brandPrimary);
   pdf.rect(0, 0, 210, 55, 'F');
   
@@ -114,7 +111,7 @@ export const generatePDFReceipt = (receiptData: ReceiptData): Blob => {
   pdf.setTextColor(brandSecondary);
   pdf.text(receiptData.receipt_number, 145, yPos + 2);
 
-  // Date with icon
+  // Date
   pdf.setTextColor(textPrimary);
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(8);
@@ -183,7 +180,7 @@ export const generatePDFReceipt = (receiptData: ReceiptData): Blob => {
   
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(16);
-  pdf.text(`₹ ${receiptData.total_amount.toLocaleString('en-IN')}`, amountBoxX, yPos + 8);
+  pdf.text(`Rs ${receiptData.total_amount.toLocaleString('en-IN')}`, amountBoxX, yPos + 8);
 
   yPos += 25;
 
@@ -225,7 +222,7 @@ export const generatePDFReceipt = (receiptData: ReceiptData): Blob => {
 
   yPos += 12;
 
-  // Charges For Section with icon
+  // Charges For Section
   pdf.setTextColor(textSecondary);
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(9);
@@ -249,10 +246,10 @@ export const generatePDFReceipt = (receiptData: ReceiptData): Blob => {
   yPos += 8;
   
   const paymentMethods = [
-    { label: 'CASH', value: 'cash', icon: '💵' },
-    { label: 'CHEQUE', value: 'cheque', icon: '📋' },
-    { label: 'UPI/IMPS', value: 'upi_imps', icon: '📱' },
-    { label: 'TRANSFER', value: 'bank_transfer', icon: '🏦' }
+    { label: 'CASH', value: 'cash' },
+    { label: 'CHEQUE', value: 'cheque' },
+    { label: 'UPI/IMPS', value: 'upi_imps' },
+    { label: 'TRANSFER', value: 'bank_transfer' }
   ];
   
   let xPos = 30;
@@ -275,9 +272,9 @@ export const generatePDFReceipt = (receiptData: ReceiptData): Blob => {
     pdf.text(method.label, xPos, yPos);
     
     if (isSelected) {
-      // Add checkmark
+      // Add checkmark (using ASCII)
       pdf.setTextColor(255, 255, 255);
-      pdf.text('✓', xPos + 28, yPos);
+      pdf.text('X', xPos + 28, yPos);
     }
     
     xPos += 38;
@@ -296,7 +293,7 @@ export const generatePDFReceipt = (receiptData: ReceiptData): Blob => {
   pdf.setFontSize(9);
   pdf.text('DESCRIPTION', 30, tableStartY + 7);
   pdf.text('MONTH', 120, tableStartY + 7);
-  pdf.text('AMOUNT (₹)', 155, tableStartY + 7);
+  pdf.text('AMOUNT (Rs)', 155, tableStartY + 7);
 
   // Table rows with alternating colors
   yPos = tableStartY + 16;
@@ -336,7 +333,7 @@ export const generatePDFReceipt = (receiptData: ReceiptData): Blob => {
   pdf.setFontSize(11);
   pdf.text('TOTAL AMOUNT', 30, yPos + 3);
   pdf.setFontSize(12);
-  pdf.text(`₹ ${receiptData.total_amount.toLocaleString('en-IN')}`, 155, yPos + 3);
+  pdf.text(`Rs ${receiptData.total_amount.toLocaleString('en-IN')}`, 155, yPos + 3);
 
   // QR Code placeholder
   yPos += 25;
@@ -358,7 +355,7 @@ export const generatePDFReceipt = (receiptData: ReceiptData): Blob => {
   pdf.setTextColor(successGreen);
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(12);
-  pdf.text('Thank you for your prompt payment! 🙏', 30, yPos + 8);
+  pdf.text('Thank you for your prompt payment!', 30, yPos + 8);
   
   pdf.setTextColor(textSecondary);
   pdf.setFont('helvetica', 'normal');
